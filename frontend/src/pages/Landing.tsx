@@ -3,61 +3,73 @@ import { Link } from "react-router-dom";
 
 export default function Landing() {
   return (
-    <main className="landing-page">
-      <nav className="landing-nav">
-        <Link to="/" className="brand landing-brand" aria-label="Nexora home">
-          <span className="brand-mark">N</span><span>Nexora</span>
+    <main className="nexora-home">
+      <style>{`
+        .nexora-home{min-height:100svh;height:100svh;overflow:hidden;background:#f7f7f5;color:#111214;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+        .nexora-nav{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,72px);box-sizing:border-box}
+        .nexora-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#111214;font-weight:700;font-size:18px;letter-spacing:-.03em}
+        .nexora-mark{width:30px;height:30px;border-radius:9px;background:#17181c;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800}
+        .nexora-nav-actions{display:flex;align-items:center;gap:24px}
+        .nexora-signin{color:#555860;text-decoration:none;font-size:14px;font-weight:500}
+        .nexora-signin:hover{color:#111214}
+        .nexora-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#17181c;color:#fff;text-decoration:none;border-radius:9px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);transition:transform .18s ease,background .18s ease}
+        .nexora-button:hover{background:#292b31;transform:translateY(-1px)}
+        .nexora-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);align-items:center;gap:clamp(40px,7vw,110px);padding:clamp(20px,4vh,48px) clamp(20px,8vw,120px) clamp(28px,5vh,60px);box-sizing:border-box}
+        .nexora-copy{max-width:680px}
+        .nexora-kicker{display:inline-flex;align-items:center;gap:8px;color:#686c75;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin:0 0 20px}
+        .nexora-dot{width:7px;height:7px;border-radius:50%;background:#5b5ce2}
+        .nexora-title{font-size:clamp(48px,6.4vw,88px);line-height:.96;letter-spacing:-.065em;margin:0;font-weight:700;max-width:760px}
+        .nexora-title span{color:#5b5ce2}
+        .nexora-description{font-size:clamp(16px,1.4vw,19px);line-height:1.55;color:#676b74;max-width:550px;margin:26px 0 30px}
+        .nexora-actions{display:flex;align-items:center;gap:18px}
+        .nexora-secondary{color:#4f535b;text-decoration:none;font-size:14px;font-weight:600}
+        .nexora-secondary:hover{color:#111214}
+        .nexora-preview{width:min(100%,560px);justify-self:end;background:#fff;border:1px solid #e5e5e1;border-radius:18px;box-shadow:0 24px 70px rgba(20,22,28,.10),0 2px 8px rgba(20,22,28,.04);overflow:hidden;transform:perspective(1200px) rotateY(-4deg) rotateX(2deg)}
+        .preview-bar{height:42px;border-bottom:1px solid #ededeb;display:flex;align-items:center;padding:0 15px;gap:6px}
+        .preview-bar i{width:7px;height:7px;border-radius:50%;background:#d7d7d3}.preview-bar i:nth-child(2){background:#e3e3df}.preview-bar i:nth-child(3){background:#ededeb}
+        .preview-body{display:grid;grid-template-columns:115px 1fr;min-height:330px}
+        .preview-side{background:#fafaf8;border-right:1px solid #ededeb;padding:18px 12px}
+        .preview-side strong{display:block;font-size:11px;margin:0 5px 20px}.preview-nav{height:9px;background:#e8e8e4;border-radius:4px;margin:12px 5px}.preview-nav.active{height:28px;background:#e9e9ff}
+        .preview-content{padding:24px}.preview-heading{height:10px;width:130px;background:#202126;border-radius:5px;margin-bottom:22px}.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.preview-card{height:66px;border:1px solid #ededeb;border-radius:9px;padding:11px;box-sizing:border-box}.preview-card b{display:block;width:35px;height:7px;background:#dcdcd8;border-radius:4px;margin-bottom:12px}.preview-card span{display:block;width:45px;height:9px;background:#27282c;border-radius:4px}.preview-lower{display:grid;grid-template-columns:1.3fr .7fr;gap:10px;margin-top:10px}.preview-panel{height:150px;border:1px solid #ededeb;border-radius:9px;padding:13px;box-sizing:border-box}.preview-panel em{display:block;width:75px;height:6px;background:#dddeda;border-radius:4px;margin-bottom:25px}.preview-chart{height:78px;position:relative;border-bottom:1px solid #ededeb}.preview-chart:after{content:"";position:absolute;left:0;right:0;bottom:15px;height:48px;border-top:2px solid #6668dc;transform:skewY(-8deg)}.preview-lines{display:grid;gap:10px}.preview-lines span{height:9px;background:#ededeb;border-radius:4px}.nexora-footer{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,72px);color:#9a9ca1;font-size:11px;box-sizing:border-box}
+        @media(max-width:900px){.nexora-home{height:auto;min-height:100svh;overflow:auto}.nexora-main{grid-template-columns:1fr;padding-top:6vh}.nexora-copy{margin:auto;text-align:center}.nexora-description{margin-left:auto;margin-right:auto}.nexora-actions{justify-content:center}.nexora-preview{justify-self:center;max-width:520px;transform:none}.nexora-footer{display:none}}
+        @media(max-width:560px){.nexora-nav{height:64px}.nexora-nav-actions{gap:12px}.nexora-signin{display:none}.nexora-title{font-size:48px}.nexora-description{font-size:15px;margin-top:20px}.nexora-preview{display:none}.nexora-main{padding-top:13vh;align-items:start}.nexora-footer{display:none}}
+      `}</style>
+
+      <nav className="nexora-nav">
+        <Link to="/" className="nexora-brand" aria-label="Nexora home">
+          <span className="nexora-mark">N</span>Nexora
         </Link>
-        <div className="landing-actions">
-          <Link to="/login" className="landing-login">Sign in</Link>
-          <Link to="/register" className="primary-button landing-cta">Get started <ArrowRight size={15} /></Link>
+        <div className="nexora-nav-actions">
+          <Link to="/login" className="nexora-signin">Sign in</Link>
+          <Link to="/register" className="nexora-button">Get started <ArrowRight size={15} /></Link>
         </div>
       </nav>
 
-      <section className="landing-hero">
-        <p className="eyebrow">A calmer way to run your team</p>
-        <h1>Bring your work<br /><span>into focus.</span></h1>
-        <p className="landing-lead">Nexora gives modern teams one clear place to organize work, stay aligned, and keep projects moving.</p>
-        <div className="landing-hero-actions">
-          <Link to="/register" className="primary-button">Start for free <ArrowRight size={16} /></Link>
-          <Link to="/login" className="landing-secondary">Sign in</Link>
+      <section className="nexora-main">
+        <div className="nexora-copy">
+          <p className="nexora-kicker"><span className="nexora-dot" /> Project management, without the noise</p>
+          <h1 className="nexora-title">Bring your team.<br />Bring your work.<br /><span>Move forward.</span></h1>
+          <p className="nexora-description">One calm, focused workspace for teams to plan, collaborate, and keep work moving.</p>
+          <div className="nexora-actions">
+            <Link to="/register" className="nexora-button">Start for free <ArrowRight size={16} /></Link>
+            <Link to="/login" className="nexora-secondary">Sign in →</Link>
+          </div>
         </div>
 
-        <div className="landing-preview" aria-label="Nexora workspace preview">
-          <div className="preview-sidebar">
-            <div className="preview-logo">N</div>
-            <span /><span /><span /><span /><span />
-          </div>
-          <div className="preview-main">
-            <div className="preview-top"><div><small>Workspace</small><strong>Good morning</strong></div><i /></div>
-            <div className="preview-stats"><div /><div /><div /></div>
-            <div className="preview-grid">
-              <div className="preview-chart"><small>Project progress</small><div className="preview-line"><i /><i /><i /><i /><i /><i /></div></div>
-              <div className="preview-list"><small>Today</small><p /><p /><p /></div>
+        <div className="nexora-preview" aria-hidden="true">
+          <div className="preview-bar"><i /><i /><i /></div>
+          <div className="preview-body">
+            <aside className="preview-side"><strong>Nexora</strong><div className="preview-nav active" /><div className="preview-nav" /><div className="preview-nav" /><div className="preview-nav" /><div className="preview-nav" /></aside>
+            <div className="preview-content">
+              <div className="preview-heading" />
+              <div className="preview-cards"><div className="preview-card"><b /><span /></div><div className="preview-card"><b /><span /></div><div className="preview-card"><b /><span /></div></div>
+              <div className="preview-lower"><div className="preview-panel"><em /><div className="preview-chart" /></div><div className="preview-panel"><em /><div className="preview-lines"><span /><span /><span /><span /></div></div></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="landing-statement">
-        <p className="eyebrow">Built for focused teams</p>
-        <h2>Less chasing.<br /><span>More shipping.</span></h2>
-        <p>Plan the work, keep everyone aligned, and understand progress without adding another layer of noise.</p>
-      </section>
-
-      <section className="landing-pillars" aria-label="Nexora principles">
-        <article><span>01</span><h3>Plan</h3><p>Turn goals into clear work your team can actually move forward.</p></article>
-        <article><span>02</span><h3>Collaborate</h3><p>Give people ownership and keep the right context close to the work.</p></article>
-        <article><span>03</span><h3>Measure</h3><p>See what is moving, what is stuck, and where attention is needed.</p></article>
-      </section>
-
-      <section className="landing-final-cta">
-        <p className="eyebrow">Ready when you are</p>
-        <h2>Make work feel<br /><span>simple again.</span></h2>
-        <Link to="/register" className="primary-button">Create your workspace <ArrowRight size={16} /></Link>
-      </section>
-
-      <footer className="landing-footer"><span>© {new Date().getFullYear()} Nexora</span><span>Work smarter. Ship faster.</span></footer>
+      <footer className="nexora-footer"><span>© {new Date().getFullYear()} Nexora</span><span>Work smarter. Ship faster.</span></footer>
     </main>
   );
 }
