@@ -6,3 +6,4 @@ python-dotenv
 gunicorn
 Werkzeug
 psycopg[binary]
+pytest
