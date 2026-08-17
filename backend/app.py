@@ -60,6 +60,11 @@ def project_payload(project):
     }
 
 
+@app.get("/")
+def root():
+    return jsonify({"success": True, "message": "Nexora API is running", "health": "/api/health"})
+
+
 @app.get("/api/health")
 def health():
     return {"success": True, "message": "Nexora API is running"}
