@@ -20,6 +20,13 @@ def teardown_function():
         db.drop_all()
 
 
+def auth_client():
+    client = app.test_client()
+    response = client.post("/api/auth/register", json={"name": "Test User", "email": "test@example.com", "password": "password123"})
+    token = response.get_json()["accessToken"]
+    return client, {"Authorization": f"Bearer {token}"}
+
+
 def test_root_and_health():
     client = app.test_client()
     assert client.get("/").status_code == 200
@@ -28,28 +35,42 @@ def test_root_and_health():
 
 def test_register_login_refresh_and_me():
     client = app.test_client()
-    register = client.post(
-        "/api/auth/register",
-        json={"name": "Test User", "email": "test@example.com", "password": "password123"},
-    )
+    register = client.post("/api/auth/register", json={"name": "Test User", "email": "test@example.com", "password": "password123"})
     assert register.status_code == 201
     body = register.get_json()
     assert body["accessToken"]
     assert body["refreshToken"]
-
     me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {body['accessToken']}"})
     assert me.status_code == 200
     assert me.get_json()["user"]["email"] == "test@example.com"
-
-    refresh = client.post(
-        "/api/auth/refresh",
-        headers={"Authorization": f"Bearer {body['refreshToken']}"},
-    )
+    refresh = client.post("/api/auth/refresh", headers={"Authorization": f"Bearer {body['refreshToken']}"})
     assert refresh.status_code == 200
     assert refresh.get_json()["accessToken"]
 
 
+def test_project_task_and_dashboard_flow():
+    client, headers = auth_client()
+    project = client.post("/api/projects", headers=headers, json={"name": "Website Redesign", "description": "Production website"})
+    assert project.status_code == 201
+    project_id = project.get_json()["project"]["id"]
+
+    task = client.post("/api/tasks", headers=headers, json={"title": "Build login API", "projectId": project_id, "priority": "High"})
+    assert task.status_code == 201
+    task_id = task.get_json()["task"]["id"]
+
+    updated = client.patch(f"/api/tasks/{task_id}", headers=headers, json={"status": "Done"})
+    assert updated.status_code == 200
+    assert updated.get_json()["task"]["status"] == "Done"
+
+    summary = client.get("/api/dashboard/summary", headers=headers)
+    assert summary.status_code == 200
+    body = summary.get_json()
+    assert body["stats"]["projects"] == 1
+    assert body["stats"]["completed"] == 1
+    assert body["activity"]
+
+
 def test_protected_projects_require_auth():
     client = app.test_client()
-    response = client.get("/api/projects")
-    assert response.status_code == 401
+    assert client.get("/api/projects").status_code == 401
+    assert client.get("/api/tasks").status_code == 401
