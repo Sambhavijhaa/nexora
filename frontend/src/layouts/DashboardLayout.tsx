@@ -1,5 +1,15 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { BarChart3, Bell, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Settings, Users, Activity } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  Bell,
+  CheckSquare,
+  FolderKanban,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Users,
+} from "lucide-react";
 
 const navigation = [
   { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
@@ -10,29 +20,46 @@ const navigation = [
   { name: "Activity", path: "/activity", icon: Activity },
 ];
 
-export default function DashboardLayout() {
-  const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("nexora_user") || "{}") as { name?: string; role?: string };
-  const initials = (user.name || "N")
-    .split(" ")
-    .map((part: string) => part[0])
+type StoredUser = { name?: string; role?: string; email?: string };
+
+function readUser(): StoredUser {
+  try {
+    return JSON.parse(localStorage.getItem("nexora_user") || "{}") as StoredUser;
+  } catch {
+    return {};
+  }
+}
+
+function initials(name: string) {
+  return (name || "N")
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+export default function DashboardLayout() {
+  const navigate = useNavigate();
+  const user = readUser();
+  const userInitials = initials(user.name || "Nexora");
 
   function logout() {
-    localStorage.removeItem("nexora_access_token");
-    localStorage.removeItem("nexora_refresh_token");
-    localStorage.removeItem("nexora_token");
-    localStorage.removeItem("nexora_user");
+    [
+      "nexora_access_token",
+      "nexora_refresh_token",
+      "nexora_token",
+      "nexora_user",
+    ].forEach((key) => localStorage.removeItem(key));
     navigate("/login", { replace: true });
   }
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand">
-          <div className="brand-mark">N</div>
+          <div className="brand-mark" aria-hidden="true">N</div>
           <span>Nexora</span>
         </div>
 
@@ -42,9 +69,10 @@ export default function DashboardLayout() {
             <NavLink
               key={path}
               to={path}
+              title={name}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
-              <Icon size={17} />
+              <Icon size={17} aria-hidden="true" />
               <span>{name}</span>
             </NavLink>
           ))}
@@ -52,19 +80,20 @@ export default function DashboardLayout() {
           <p className="nav-label settings-label">Account</p>
           <NavLink
             to="/settings"
+            title="Settings"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
           >
-            <Settings size={17} />
+            <Settings size={17} aria-hidden="true" />
             <span>Settings</span>
           </NavLink>
-          <button className="nav-item logout-nav" onClick={logout}>
-            <LogOut size={17} />
+          <button className="nav-item logout-nav" onClick={logout} type="button" title="Sign out">
+            <LogOut size={17} aria-hidden="true" />
             <span>Sign out</span>
           </button>
         </nav>
 
         <div className="sidebar-user">
-          <div className="avatar">{initials}</div>
+          <div className="avatar" aria-hidden="true">{userInitials}</div>
           <div className="user-copy">
             <strong>{user.name || "User"}</strong>
             <span>{user.role || "Member"}</span>
@@ -74,18 +103,28 @@ export default function DashboardLayout() {
 
       <main className="main-content">
         <header className="topbar">
-          <div className="topbar-search">
-            <span>⌕</span>
+          <div className="topbar-search" role="search" aria-label="Search">
+            <span aria-hidden="true">⌕</span>
             <span>Search projects, tasks, people...</span>
             <kbd>⌘ K</kbd>
           </div>
           <div className="topbar-actions">
-            <button className="icon-button" aria-label="View activity" onClick={() => navigate("/activity")}>
-              <Bell size={17} />
-              <span className="notification-dot" />
+            <button
+              className="icon-button"
+              aria-label="View activity"
+              onClick={() => navigate("/activity")}
+              type="button"
+            >
+              <Bell size={17} aria-hidden="true" />
+              <span className="notification-dot" aria-hidden="true" />
             </button>
-            <button className="top-avatar" onClick={() => navigate("/settings")} aria-label="Open settings">
-              {initials}
+            <button
+              className="top-avatar"
+              onClick={() => navigate("/settings")}
+              aria-label="Open account settings"
+              type="button"
+            >
+              {userInitials}
             </button>
           </div>
         </header>
