@@ -17,7 +17,9 @@ export default function Login() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      localStorage.setItem("nexora_token", data.token);
+      localStorage.setItem("nexora_access_token", data.accessToken);
+      localStorage.setItem("nexora_refresh_token", data.refreshToken);
+      localStorage.setItem("nexora_token", data.accessToken);
       localStorage.setItem("nexora_user", JSON.stringify(data.user));
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
