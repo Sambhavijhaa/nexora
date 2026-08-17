@@ -1,8 +1,10 @@
 import axios from "axios";
 
+// In production the frontend talks to the deployed Render API.
+// VITE_API_URL can still override this for local/staging environments.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api",
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_URL || "https://nexora-backend-7i97.onrender.com/api",
+  timeout: 15000,
 });
 
 api.interceptors.request.use((config) => {
