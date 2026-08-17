@@ -19,20 +19,20 @@ html { font-family: var(--font-sans); background: var(--bg); }
 body { overflow-x: hidden; }
 h1,h2,h3,h4,h5,h6,.brand { font-family: var(--font-display); }
 
-/* Make the existing UI feel like one coherent product. */
 .sidebar { background: #0d1015; }
 .main-content { background: var(--bg); }
 .topbar { background: rgba(10,12,16,.88); }
 .panel,.stat-card,.auth-card { box-shadow: 0 14px 40px rgba(0,0,0,.16); }
 .panel:hover,.stat-card:hover { border-color: #303744; }
 
-/* Accessible focus states. */
+.input-icon-button { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 28px; color: #7f899a; background: transparent; border: 0; border-radius: 7px; padding: 0; }
+.input-icon-button:hover { color: #dfe3eb; background: #1b2029; }
+
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
   outline: 2px solid var(--accent-2);
   outline-offset: 2px;
 }
 
-/* Mobile navigation/content without adding visual clutter. */
 @media (max-width: 980px) {
   .sidebar { width: 76px; flex-basis: 76px; padding-inline: 10px; }
   .brand { justify-content: center; padding-inline: 0; }
