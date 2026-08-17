@@ -16,10 +16,19 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "nexora-dev-secret")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "nexora-dev-jwt-secret")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///nexora.db")
+
+# Render/Postgres may provide the legacy postgres:// scheme. SQLAlchemy 2.x
+# expects postgresql://, so normalize it before creating the engine.
+database_url = os.getenv("DATABASE_URL", "sqlite:///nexora.db")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# The API is consumed by the separately deployed Vite frontend.
+CORS(app, resources={r"/*": {"origins": "*"}})
 db.init_app(app)
 JWTManager(app)
 
@@ -62,12 +71,40 @@ def project_payload(project):
 
 @app.get("/")
 def root():
-    return jsonify({"success": True, "message": "Nexora API is running", "health": "/api/health"})
+    return jsonify({
+        "success": True,
+        "message": "Nexora API is running",
+        "health": "/api/health",
+        "api": "/api",
+    })
+
+
+@app.get("/api")
+@app.get("/api/")
+def api_root():
+    return jsonify({
+        "success": True,
+        "message": "Nexora API is running",
+        "health": "/api/health",
+        "endpoints": ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/projects"],
+    })
 
 
 @app.get("/api/health")
+@app.get("/api/health/")
 def health():
-    return {"success": True, "message": "Nexora API is running"}
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        database = "connected"
+    except Exception:
+        db.session.rollback()
+        database = "unavailable"
+
+    return jsonify({
+        "success": True,
+        "message": "Nexora API is running",
+        "database": database,
+    })
 
 
 @app.post("/api/auth/register")
@@ -156,4 +193,4 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)
