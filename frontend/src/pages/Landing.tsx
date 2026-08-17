@@ -1,18 +1,13 @@
-import { ArrowRight, BarChart3, CheckCircle2, FolderKanban, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const features = [
-  { icon: FolderKanban, title: "Projects", text: "Plan work, track delivery and keep every project moving." },
-  { icon: CheckCircle2, title: "Tasks", text: "Assign owners, priorities and statuses from one focused board." },
-  { icon: Users, title: "Team", text: "Bring your people together with clear roles and shared context." },
-  { icon: BarChart3, title: "Analytics", text: "Turn everyday work into simple, useful delivery insights." },
-];
 
 export default function Landing() {
   return (
     <main className="landing-page">
       <nav className="landing-nav">
-        <div className="brand landing-brand"><span className="brand-mark">N</span><span>Nexora</span></div>
+        <Link to="/" className="brand landing-brand" aria-label="Nexora home">
+          <span className="brand-mark">N</span><span>Nexora</span>
+        </Link>
         <div className="landing-actions">
           <Link to="/login" className="landing-login">Sign in</Link>
           <Link to="/register" className="primary-button landing-cta">Get started <ArrowRight size={15} /></Link>
@@ -20,26 +15,46 @@ export default function Landing() {
       </nav>
 
       <section className="landing-hero">
-        <p className="eyebrow">Project management for modern teams</p>
-        <h1>Work clearly.<br /><span>Ship confidently.</span></h1>
-        <p>Projects, tasks, people and delivery insights in one calm workspace built for teams that want less noise and more progress.</p>
+        <p className="eyebrow">A calmer way to run your team</p>
+        <h1>Bring your work<br /><span>into focus.</span></h1>
+        <p className="landing-lead">Nexora gives modern teams one clear place to organize work, stay aligned, and keep projects moving.</p>
         <div className="landing-hero-actions">
-          <Link to="/register" className="primary-button">Create your workspace <ArrowRight size={16} /></Link>
+          <Link to="/register" className="primary-button">Start for free <ArrowRight size={16} /></Link>
           <Link to="/login" className="landing-secondary">Sign in</Link>
         </div>
 
-        <div className="landing-preview" aria-label="Nexora dashboard preview">
-          <div className="preview-sidebar"><div className="preview-logo">N</div><span /> <span /><span /><span /><span /></div>
+        <div className="landing-preview" aria-label="Nexora workspace preview">
+          <div className="preview-sidebar">
+            <div className="preview-logo">N</div>
+            <span /><span /><span /><span /><span />
+          </div>
           <div className="preview-main">
-            <div className="preview-top"><div><small>Workspace overview</small><strong>Good morning 👋</strong></div><i /></div>
-            <div className="preview-stats"><div /><div /><div /><div /></div>
-            <div className="preview-grid"><div className="preview-chart"><small>Task completion</small><div className="preview-bars">{[32,48,40,62,55,76,67].map((height) => <b key={height} style={{ height: `${height}%` }} />)}</div></div><div className="preview-list"><small>Recent activity</small><p /><p /><p /><p /></div></div>
+            <div className="preview-top"><div><small>Workspace</small><strong>Good morning</strong></div><i /></div>
+            <div className="preview-stats"><div /><div /><div /></div>
+            <div className="preview-grid">
+              <div className="preview-chart"><small>Project progress</small><div className="preview-line"><i /><i /><i /><i /><i /><i /></div></div>
+              <div className="preview-list"><small>Today</small><p /><p /><p /></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="landing-features">
-        {features.map(({ icon: Icon, title, text }) => <article key={title}><div><Icon size={18} /></div><h3>{title}</h3><p>{text}</p></article>)}
+      <section className="landing-statement">
+        <p className="eyebrow">Built for focused teams</p>
+        <h2>Less chasing.<br /><span>More shipping.</span></h2>
+        <p>Plan the work, keep everyone aligned, and understand progress without adding another layer of noise.</p>
+      </section>
+
+      <section className="landing-pillars" aria-label="Nexora principles">
+        <article><span>01</span><h3>Plan</h3><p>Turn goals into clear work your team can actually move forward.</p></article>
+        <article><span>02</span><h3>Collaborate</h3><p>Give people ownership and keep the right context close to the work.</p></article>
+        <article><span>03</span><h3>Measure</h3><p>See what is moving, what is stuck, and where attention is needed.</p></article>
+      </section>
+
+      <section className="landing-final-cta">
+        <p className="eyebrow">Ready when you are</p>
+        <h2>Make work feel<br /><span>simple again.</span></h2>
+        <Link to="/register" className="primary-button">Create your workspace <ArrowRight size={16} /></Link>
       </section>
 
       <footer className="landing-footer"><span>© {new Date().getFullYear()} Nexora</span><span>Work smarter. Ship faster.</span></footer>
