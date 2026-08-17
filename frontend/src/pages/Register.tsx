@@ -18,7 +18,9 @@ export default function Register() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/register", form);
-      localStorage.setItem("nexora_token", data.token);
+      localStorage.setItem("nexora_access_token", data.accessToken);
+      localStorage.setItem("nexora_refresh_token", data.refreshToken);
+      localStorage.setItem("nexora_token", data.accessToken);
       localStorage.setItem("nexora_user", JSON.stringify(data.user));
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
@@ -34,7 +36,7 @@ export default function Register() {
         <h1>Create your workspace</h1>
         <p className="auth-subtitle">Start organizing projects and collaborating with your team in Nexora.</p>
         <form onSubmit={handleSubmit} className="auth-form">
-          <label>Full name<div className="input-wrap"><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Sambhavi Jha" required /><UserRound size={17} /></div></label>
+          <label>Full name<div className="input-wrap"><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Your name" required /><UserRound size={17} /></div></label>
           <label>Email<div className="input-wrap"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" required /><Mail size={17} /></div></label>
           <label>Password<div className="input-wrap"><input type="password" value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" minLength={8} required /><LockKeyhole size={17} /></div></label>
           {error && <div className="form-error">{error}</div>}
