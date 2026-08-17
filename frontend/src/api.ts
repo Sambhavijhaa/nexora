@@ -1,11 +1,10 @@
 import axios from "axios";
 
-// In production the frontend talks to the deployed Render API.
-// VITE_API_URL can still override this for local/staging environments.
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://nexora-backend-7i97.onrender.com/api",
-  timeout: 15000,
-});
+const API_BASE_URL = import.meta.env.PROD
+  ? "https://nexora-backend-7i97.onrender.com/api"
+  : (import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api");
+
+const api = axios.create({ baseURL: API_BASE_URL, timeout: 15000 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
@@ -23,27 +22,18 @@ api.interceptors.response.use(
     if (error.response?.status !== 401 || original?._retry || original?.url?.includes("/auth/")) {
       return Promise.reject(error);
     }
-
     const refreshToken = localStorage.getItem("nexora_refresh_token");
-    if (!refreshToken) {
-      localStorage.removeItem("nexora_access_token");
-      localStorage.removeItem("nexora_token");
-      return Promise.reject(error);
-    }
-
+    if (!refreshToken) return Promise.reject(error);
     if (refreshing) {
-      return new Promise((resolve) => {
-        queued.push((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          resolve(api(original));
-        });
-      });
+      return new Promise((resolve) => queued.push((token) => {
+        original.headers.Authorization = `Bearer ${token}`;
+        resolve(api(original));
+      }));
     }
-
     original._retry = true;
     refreshing = true;
     try {
-      const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, {
+      const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
         headers: { Authorization: `Bearer ${refreshToken}` },
       });
       const token = data.accessToken;
@@ -55,10 +45,7 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshError) {
       queued = [];
-      localStorage.removeItem("nexora_access_token");
-      localStorage.removeItem("nexora_refresh_token");
-      localStorage.removeItem("nexora_token");
-      localStorage.removeItem("nexora_user");
+      ["nexora_access_token", "nexora_refresh_token", "nexora_token", "nexora_user"].forEach((key) => localStorage.removeItem(key));
       return Promise.reject(refreshError);
     } finally {
       refreshing = false;
