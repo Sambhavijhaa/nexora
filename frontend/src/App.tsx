@@ -1,14 +1,15 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
+import Activity from "./pages/Activity";
+import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Projects from "./pages/Projects";
+import Register from "./pages/Register";
+import Settings from "./pages/Settings";
 import Tasks from "./pages/Tasks";
 import Team from "./pages/Team";
-import Analytics from "./pages/Analytics";
-import Activity from "./pages/Activity";
-import Settings from "./pages/Settings";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
@@ -29,8 +31,7 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
-      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
     </Routes>
   );
 }

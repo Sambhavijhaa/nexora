@@ -4,6 +4,13 @@ import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
+function getApiError(error: unknown) {
+  const err = error as { response?: { data?: { message?: string } } };
+  if (err.response?.data?.message) return err.response.data.message;
+  if (!err.response) return "We couldn't reach Nexora right now. Please check your connection and try again.";
+  return "Unable to sign in. Please check your details and try again.";
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -12,32 +19,80 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
-    event.preventDefault(); setError(""); setLoading(true);
+    event.preventDefault();
+    setError("");
+    setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
+      if (!data.accessToken || !data.refreshToken || !data.user) {
+        throw new Error("The server returned an incomplete login response.");
+      }
       localStorage.setItem("nexora_access_token", data.accessToken);
       localStorage.setItem("nexora_refresh_token", data.refreshToken);
       localStorage.setItem("nexora_token", data.accessToken);
       localStorage.setItem("nexora_user", JSON.stringify(data.user));
       navigate("/dashboard", { replace: true });
-    } catch (err: any) { setError(err.response?.data?.message || "Unable to sign in. Please try again."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(getApiError(err));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <main className="auth-page">
-      <section className="auth-card">
-        <div className="auth-brand"><span className="brand-mark">N</span><strong>Nexora</strong></div>
+      <section className="auth-card" aria-labelledby="login-title">
+        <div className="auth-brand">
+          <span className="brand-mark" aria-hidden="true">N</span>
+          <strong>Nexora</strong>
+        </div>
         <p className="eyebrow">Welcome back</p>
-        <h1>Sign in to your workspace</h1>
-        <p className="auth-subtitle">Plan projects, coordinate your team and keep delivery moving from one focused workspace.</p>
+        <h1 id="login-title">Sign in to your workspace</h1>
+        <p className="auth-subtitle">
+          Plan projects, coordinate your team and keep delivery moving from one focused workspace.
+        </p>
+
         <form onSubmit={handleSubmit} className="auth-form">
-          <label>Email<div className="input-wrap"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required /><Mail size={16}/></div></label>
-          <label>Password<div className="input-wrap"><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} /><LockKeyhole size={16}/></div></label>
-          {error && <div className="form-error">{error}</div>}
-          <button className="primary-button auth-submit" disabled={loading}>{loading ? "Signing in..." : <>Sign in <ArrowRight size={16}/></>}</button>
+          <label>
+            Work email
+            <div className="input-wrap">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="email"
+                required
+              />
+              <Mail size={16} aria-hidden="true" />
+            </div>
+          </label>
+
+          <label>
+            Password
+            <div className="input-wrap">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                autoComplete="current-password"
+                required
+              />
+              <LockKeyhole size={16} aria-hidden="true" />
+            </div>
+          </label>
+
+          {error && <div className="form-error" role="alert">{error}</div>}
+
+          <button className="primary-button auth-submit" disabled={loading} type="submit">
+            {loading ? "Signing in..." : <>Sign in <ArrowRight size={16} /></>}
+          </button>
         </form>
-        <p className="auth-footer">Don't have a Nexora workspace? <Link to="/register">Create one</Link></p>
+
+        <p className="auth-footer">
+          Don't have a Nexora workspace? <Link to="/register">Create one</Link>
+        </p>
       </section>
     </main>
   );
