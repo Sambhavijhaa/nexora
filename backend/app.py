@@ -1,24 +1,48 @@
+import logging
 import os
+import time
+import uuid
 from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    create_refresh_token,
+    get_jwt,
+    get_jwt_identity,
+    jwt_required,
+)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 
 load_dotenv()
 
-db = SQLAlchemy()
 
+def configure_logging():
+    level = os.getenv("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(
+        level=getattr(logging, level, logging.INFO),
+        format="%(asctime)s %(levelname)s %(name)s request_id=%(request_id)s %(message)s",
+    )
+
+
+configure_logging()
+logger = logging.getLogger("nexora.api")
+
+
+db = SQLAlchemy()
 app = Flask(__name__)
+
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "nexora-dev-secret")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "nexora-dev-jwt-secret")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES", "30")))
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=int(os.getenv("JWT_REFRESH_DAYS", "30")))
 
-# Render/Postgres may provide the legacy postgres:// scheme. SQLAlchemy 2.x
-# expects postgresql://, so normalize it before creating the engine.
+# Render/Postgres may provide postgres:// or postgresql://. SQLAlchemy uses the
+# psycopg driver explicitly in production.
 database_url = os.getenv("DATABASE_URL", "sqlite:///nexora.db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
@@ -27,10 +51,53 @@ elif database_url.startswith("postgresql://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# The API is consumed by the separately deployed Vite frontend.
-CORS(app, resources={r"/*": {"origins": "*"}})
+cors_origins = os.getenv("CORS_ORIGINS", "*")
+CORS(app, resources={r"/*": {"origins": cors_origins.split(",") if cors_origins != "*" else "*"}})
+
 db.init_app(app)
-JWTManager(app)
+jwt = JWTManager(app)
+
+
+@app.before_request
+def start_request():
+    g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    g.request_started = time.perf_counter()
+
+
+@app.after_request
+def log_request(response):
+    duration_ms = round((time.perf_counter() - getattr(g, "request_started", time.perf_counter())) * 1000, 2)
+    logger.info(
+        "%s %s status=%s duration_ms=%s",
+        request.method,
+        request.path,
+        response.status_code,
+        duration_ms,
+        extra={"request_id": getattr(g, "request_id", "-")},
+    )
+    response.headers["X-Request-ID"] = getattr(g, "request_id", "-")
+    return response
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(error):
+    logger.exception("Unhandled application error", extra={"request_id": getattr(g, "request_id", "-")})
+    return jsonify({"success": False, "message": "Internal server error.", "requestId": getattr(g, "request_id", None)}), 500
+
+
+@jwt.unauthorized_loader
+def jwt_missing(reason):
+    return jsonify({"success": False, "message": "Authorization token is required."}), 401
+
+
+@jwt.invalid_token_loader
+def jwt_invalid(reason):
+    return jsonify({"success": False, "message": "Invalid authorization token."}), 401
+
+
+@jwt.expired_token_loader
+def jwt_expired(header, payload):
+    return jsonify({"success": False, "message": "Token expired."}), 401
 
 
 class User(db.Model):
@@ -40,7 +107,6 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(40), nullable=False, default="Member")
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-
     projects = db.relationship("Project", backref="owner", lazy=True, cascade="all, delete-orphan")
 
 
@@ -69,14 +135,18 @@ def project_payload(project):
     }
 
 
+def token_response(user):
+    return {
+        "success": True,
+        "accessToken": create_access_token(identity=str(user.id)),
+        "refreshToken": create_refresh_token(identity=str(user.id)),
+        "user": user_payload(user),
+    }
+
+
 @app.get("/")
 def root():
-    return jsonify({
-        "success": True,
-        "message": "Nexora API is running",
-        "health": "/api/health",
-        "api": "/api",
-    })
+    return jsonify({"success": True, "message": "Nexora API is running", "health": "/api/health", "api": "/api"})
 
 
 @app.get("/api")
@@ -86,25 +156,21 @@ def api_root():
         "success": True,
         "message": "Nexora API is running",
         "health": "/api/health",
-        "endpoints": ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/projects"],
+        "endpoints": ["/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/me", "/api/projects"],
     })
 
 
 @app.get("/api/health")
 @app.get("/api/health/")
 def health():
+    database = "connected"
     try:
         db.session.execute(db.text("SELECT 1"))
-        database = "connected"
     except Exception:
         db.session.rollback()
         database = "unavailable"
-
-    return jsonify({
-        "success": True,
-        "message": "Nexora API is running",
-        "database": database,
-    })
+    status_code = 200 if database == "connected" else 503
+    return jsonify({"success": database == "connected", "message": "Nexora API is running", "database": database}), status_code
 
 
 @app.post("/api/auth/register")
@@ -113,17 +179,14 @@ def register():
     name = str(data.get("name", "")).strip()
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
-
     if not name or not email or len(password) < 8:
         return jsonify({"success": False, "message": "Name, email and an 8-character password are required."}), 400
     if User.query.filter_by(email=email).first():
         return jsonify({"success": False, "message": "An account with this email already exists."}), 409
-
     user = User(name=name, email=email, password_hash=generate_password_hash(password), role="Admin")
     db.session.add(user)
     db.session.commit()
-    token = create_access_token(identity=str(user.id))
-    return jsonify({"success": True, "token": token, "user": user_payload(user)}), 201
+    return jsonify(token_response(user)), 201
 
 
 @app.post("/api/auth/login")
@@ -132,12 +195,24 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
     user = User.query.filter_by(email=email).first()
-
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"success": False, "message": "Invalid email or password."}), 401
+    return jsonify(token_response(user))
 
-    token = create_access_token(identity=str(user.id))
-    return jsonify({"success": True, "token": token, "user": user_payload(user)})
+
+@app.post("/api/auth/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    return jsonify({"success": True, "accessToken": create_access_token(identity=identity)})
+
+
+@app.post("/api/auth/logout")
+@jwt_required(refresh=True)
+def logout():
+    # Stateless JWT logout: the client must discard both tokens. A future
+    # Redis-backed blocklist can revoke refresh-token JTIs when required.
+    return jsonify({"success": True, "message": "Logged out successfully."})
 
 
 @app.get("/api/auth/me")
@@ -164,12 +239,15 @@ def create_project():
     name = str(data.get("name", "")).strip()
     if not name:
         return jsonify({"success": False, "message": "Project name is required."}), 400
-
+    try:
+        progress = int(data.get("progress", 0))
+    except (TypeError, ValueError):
+        progress = 0
     project = Project(
         name=name,
         description=str(data.get("description", "")).strip(),
         status=str(data.get("status", "Active")),
-        progress=max(0, min(100, int(data.get("progress", 0)))),
+        progress=max(0, min(100, progress)),
         owner_id=int(get_jwt_identity()),
     )
     db.session.add(project)
