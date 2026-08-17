@@ -3,13 +3,15 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Projects from "./pages/Projects";
+import Tasks from "./pages/Tasks";
+import Team from "./pages/Team";
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-function Placeholder({ title }: { title: string }) {
-  return <div className="placeholder-page"><p className="eyebrow">Nexora</p><h2>{title}</h2><p>This workspace section is coming next.</p></div>;
-}
-
 export default function App() {
+  const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -17,15 +19,15 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<Placeholder title="Projects" />} />
-          <Route path="/tasks" element={<Placeholder title="Tasks" />} />
-          <Route path="/team" element={<Placeholder title="Team" />} />
-          <Route path="/analytics" element={<Placeholder title="Analytics" />} />
-          <Route path="/settings" element={<Placeholder title="Settings" />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate to={localStorage.getItem("nexora_token") ? "/dashboard" : "/login"} replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
     </Routes>
   );
 }
