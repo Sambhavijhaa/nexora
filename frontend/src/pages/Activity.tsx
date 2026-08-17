@@ -17,36 +17,19 @@ export default function Activity() {
 
   useEffect(() => {
     api.get("/activity")
-      .then(({ data }) => setItems(data.activities || []))
+      .then(({ data }) => setItems(data.activity || []))
       .catch((err) => setError(err.response?.data?.message || "Could not load activity."));
   }, []);
 
   return (
     <div className="workspace-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">Workspace timeline</p>
-          <h2>Activity</h2>
-          <p>Follow the actions shaping your projects and team.</p>
-        </div>
-      </div>
+      <div className="page-heading"><div><p className="eyebrow">Workspace timeline</p><h2>Activity</h2><p>Follow the actions shaping your projects and team.</p></div></div>
       {error && <div className="form-error page-alert">{error}</div>}
       <div className="panel">
-        <div className="panel-header">
-          <div><p className="eyebrow">Audit trail</p><h3>Recent activity</h3></div>
-          <ActivityIcon size={17} color="#8970ff" />
-        </div>
+        <div className="panel-header"><div><p className="eyebrow">Audit trail</p><h3>Recent activity</h3></div><ActivityIcon size={17} color="#8970ff" /></div>
         {items.length ? items.map((item) => {
           const Icon = iconFor(item.action);
-          return (
-            <div className="activity" key={item.id}>
-              <div className="activity-avatar"><Icon size={14} /></div>
-              <div>
-                <strong>{item.action}</strong>
-                <span>{item.context}{item.createdAt ? ` · ${new Date(item.createdAt).toLocaleString()}` : ""}</span>
-              </div>
-            </div>
-          );
+          return <div className="activity" key={item.id}><div className="activity-avatar"><Icon size={14} /></div><div><strong>{item.action}</strong><span>{item.context}{item.createdAt ? ` · ${new Date(item.createdAt).toLocaleString()}` : ""}</span></div></div>;
         }) : <div className="empty-state">No activity yet. Create a project or task to start the timeline.</div>}
       </div>
     </div>
