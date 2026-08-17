@@ -7,11 +7,13 @@ import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import Team from "./pages/Team";
 import Analytics from "./pages/Analytics";
+import Activity from "./pages/Activity";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -23,6 +25,7 @@ export default function App() {
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/team" element={<Team />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/activity" element={<Activity />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
