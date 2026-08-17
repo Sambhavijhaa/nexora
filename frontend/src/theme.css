@@ -1,0 +1,72 @@
+/* Nexora production visual system: calm, premium, and intentionally restrained. */
+:root {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+  --bg: #0a0c10;
+  --surface: #101319;
+  --surface-2: #141820;
+  --surface-3: #1a1f29;
+  --border: #252b35;
+  --border-soft: rgba(255,255,255,.07);
+  --text: #f4f5f7;
+  --muted: #8d95a4;
+  --dim: #626b7b;
+  --accent: #7c6cff;
+  --accent-2: #9a8fff;
+}
+
+html { font-family: var(--font-sans); background: var(--bg); }
+body { overflow-x: hidden; }
+h1,h2,h3,h4,h5,h6,.brand { font-family: var(--font-display); }
+
+/* Make the existing UI feel like one coherent product. */
+.sidebar { background: #0d1015; }
+.main-content { background: var(--bg); }
+.topbar { background: rgba(10,12,16,.88); }
+.panel,.stat-card,.auth-card { box-shadow: 0 14px 40px rgba(0,0,0,.16); }
+.panel:hover,.stat-card:hover { border-color: #303744; }
+
+/* Accessible focus states. */
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+/* Mobile navigation/content without adding visual clutter. */
+@media (max-width: 980px) {
+  .sidebar { width: 76px; flex-basis: 76px; padding-inline: 10px; }
+  .brand { justify-content: center; padding-inline: 0; }
+  .brand > span, .nav-item span, .nav-label, .sidebar-user .user-copy { display: none; }
+  .nav-item { justify-content: center; padding-inline: 10px; }
+  .sidebar-user { justify-content: center; padding-inline: 0; }
+  .topbar { padding-inline: 20px; }
+  .topbar-search { width: min(48vw, 340px); }
+  .page-content { padding: 26px 22px 42px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .member-grid,.settings-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .app-shell { display: block; }
+  .sidebar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; top: auto; width: 100%; height: 64px; min-height: 64px; flex-direction: row; border-right: 0; border-top: 1px solid var(--border); padding: 7px 8px; }
+  .sidebar .brand,.sidebar .sidebar-user,.settings-label,.logout-nav { display: none; }
+  .sidebar-nav { width: 100%; flex-direction: row; justify-content: space-around; gap: 2px; }
+  .sidebar-nav .nav-label { display: none; }
+  .nav-item { flex: 1; height: 48px; }
+  .main-content { padding-bottom: 64px; }
+  .topbar { height: 62px; padding-inline: 14px; }
+  .topbar-search { flex: 1; width: auto; max-width: none; }
+  .topbar-search kbd { display: none; }
+  .page-content { padding: 22px 14px 34px; }
+  .welcome-section,.page-heading { align-items: flex-start; flex-direction: column; }
+  .welcome-section h2,.page-heading h2 { font-size: 24px; }
+  .stats-grid,.dashboard-grid,.analytics-grid,.card-grid,.task-columns { grid-template-columns: 1fr; }
+  .primary-button { width: 100%; }
+  .panel { padding: 15px; }
+  .auth-card { padding: 28px 22px; border-radius: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
