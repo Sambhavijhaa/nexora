@@ -45,6 +45,7 @@ export default function Register() {
 
   return (
     <main className="auth-page">
+      <style>{`.auth-form > :empty { display: none !important; }`}</style>
       <section className="auth-card" aria-labelledby="register-title">
         <div className="auth-brand">
           <strong>Nexora</strong>
