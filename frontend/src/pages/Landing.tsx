@@ -5,29 +5,56 @@ export default function Landing() {
   return (
     <main className="nexora-home">
       <style>{`
-        .nexora-home{min-height:100svh;height:100svh;overflow:hidden;background:#f6f7fb;color:#171a23;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column}
-        .nexora-nav{height:74px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,72px);border-bottom:1px solid #e4e7ed}.nexora-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#0f1320;font-family:Manrope,Inter,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.04em}.nexora-mark{width:32px;height:32px;border-radius:9px;background:#5b5bd6;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800}.nexora-nav-actions{display:flex;align-items:center;gap:8px}.nexora-signin{color:#5e6675;text-decoration:none;font-size:14px;font-weight:600;padding:10px 13px}.nexora-signin:hover{color:#171a23}.nexora-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#5b5bd6;color:#fff;text-decoration:none;border-radius:9px;padding:11px 15px;font-size:14px;font-weight:700;box-shadow:0 7px 18px rgba(91,91,214,.15);transition:.18s ease}.nexora-button:hover{background:#4b4bc2;transform:translateY(-1px)}
-        .nexora-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.85fr);align-items:center;gap:clamp(40px,7vw,100px);padding:clamp(24px,5vh,60px) clamp(20px,8vw,120px)}.nexora-copy{max-width:680px}.nexora-kicker{margin:0 0 16px;color:#5b5bd6;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.nexora-title{font-family:Manrope,Inter,sans-serif;font-size:clamp(48px,6vw,82px);line-height:1.01;letter-spacing:-.065em;margin:0;color:#0f1320;font-weight:800;max-width:760px}.nexora-title span{color:#5b5bd6}.nexora-description{font-size:clamp(16px,1.4vw,19px);line-height:1.6;color:#5e6675;max-width:540px;margin:24px 0 30px}.nexora-actions{display:flex;align-items:center;gap:10px}.nexora-actions .nexora-button{padding:13px 18px}
-        .nexora-preview{width:min(100%,540px);justify-self:end;background:#fff;border:1px solid #e4e7ed;border-radius:16px;box-shadow:0 24px 70px rgba(22,27,38,.09);overflow:hidden}.preview-bar{height:40px;border-bottom:1px solid #eef0f3;display:flex;align-items:center;padding:0 14px;gap:6px}.preview-bar i{width:7px;height:7px;border-radius:50%;background:#d8dce3}.preview-body{display:grid;grid-template-columns:105px 1fr;min-height:320px}.preview-side{background:#fafbfc;border-right:1px solid #eef0f3;padding:18px 11px}.preview-side strong{display:block;font:800 11px Manrope,Inter,sans-serif;color:#171a23;margin:0 5px 20px}.preview-nav{height:9px;background:#e8ebf0;border-radius:4px;margin:12px 5px}.preview-nav.active{height:28px;background:#eeefff}.preview-content{padding:23px}.preview-heading{height:10px;width:130px;background:#202432;border-radius:5px;margin-bottom:20px}.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.preview-card{height:65px;border:1px solid #edf0f4;border-radius:9px;padding:11px}.preview-card b{display:block;width:32px;height:7px;background:#dfe2e8;border-radius:4px;margin-bottom:12px}.preview-card span{display:block;width:45px;height:9px;background:#242837;border-radius:4px}.preview-lower{display:grid;grid-template-columns:1.3fr .7fr;gap:9px;margin-top:9px}.preview-panel{height:145px;border:1px solid #edf0f4;border-radius:9px;padding:12px}.preview-panel em{display:block;width:72px;height:6px;background:#dfe2e8;border-radius:4px;margin-bottom:22px}.preview-chart{height:75px;position:relative;border-bottom:1px solid #edf0f4}.preview-chart:after{content:"";position:absolute;left:0;right:0;bottom:15px;height:46px;border-top:2px solid #5b5bd6;transform:skewY(-8deg)}.preview-lines{display:grid;gap:10px}.preview-lines span{height:8px;background:#e5e8ed;border-radius:4px}.nexora-footer{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,72px);color:#858d9b;font-size:11px}
-        @media(max-width:900px){.nexora-home{height:auto;min-height:100svh;overflow:auto}.nexora-main{grid-template-columns:1fr;padding-top:7vh}.nexora-copy{margin:auto;text-align:center}.nexora-description{margin-left:auto;margin-right:auto}.nexora-actions{justify-content:center}.nexora-preview{justify-self:center;max-width:520px}.nexora-footer{display:none}}@media(max-width:560px){.nexora-nav{height:64px}.nexora-nav-actions{gap:2px}.nexora-title{font-size:48px}.nexora-description{font-size:15px}.nexora-preview{display:none}.nexora-main{padding-top:15vh}}
+        .nexora-home{min-height:100svh;height:100svh;overflow:hidden;background:#f7f8fa;color:#171a21;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column}
+        .nexora-nav{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(22px,6vw,88px);border-bottom:1px solid #e4e7eb;background:#f7f8fa}
+        .nexora-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#151821;font-family:Manrope,Inter,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.045em}
+        .nexora-mark{width:34px;height:34px;border-radius:9px;background:#5548c9;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800;box-shadow:0 5px 14px rgba(85,72,201,.18)}
+        .nexora-signin{color:#20242d;text-decoration:none;font-size:14px;font-weight:700;padding:10px 2px;border-bottom:1px solid transparent}.nexora-signin:hover{color:#5548c9;border-color:#5548c9}
+        .nexora-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,.88fr);align-items:center;gap:clamp(42px,7vw,104px);padding:clamp(28px,5vh,60px) clamp(22px,8vw,120px)}
+        .nexora-copy{max-width:680px}.nexora-title{font-family:Manrope,Inter,sans-serif;font-size:clamp(50px,6.1vw,82px);line-height:1.01;letter-spacing:-.065em;margin:0;color:#11141b;font-weight:800}.nexora-title span{color:#5548c9}
+        .nexora-description{font-size:clamp(16px,1.35vw,19px);line-height:1.6;color:#4f5663;max-width:510px;margin:24px 0 30px;font-weight:500}
+        .nexora-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#5548c9;color:#fff;text-decoration:none;border-radius:9px;padding:13px 18px;font-size:14px;font-weight:750;box-shadow:0 8px 20px rgba(85,72,201,.16);transition:background .18s ease,transform .18s ease}.nexora-button:hover{background:#4639b7;transform:translateY(-1px)}
+        .nexora-preview{width:min(100%,550px);justify-self:end;background:#fff;border:1px solid #e0e3e8;border-radius:15px;box-shadow:0 24px 65px rgba(23,28,38,.10);overflow:hidden}.preview-bar{height:38px;border-bottom:1px solid #edf0f3;display:flex;align-items:center;padding:0 14px;gap:6px}.preview-bar i{width:7px;height:7px;border-radius:50%;background:#cfd4dc}
+        .preview-body{display:grid;grid-template-columns:108px 1fr;min-height:330px}.preview-side{background:#fafbfc;border-right:1px solid #edf0f3;padding:18px 11px}.preview-side strong{display:block;font:800 11px Manrope,Inter,sans-serif;color:#171a21;margin:0 5px 20px}.preview-nav{height:9px;background:#e6e9ee;border-radius:4px;margin:12px 5px}.preview-nav.active{height:28px;background:#eeecff}
+        .preview-content{padding:23px}.preview-heading{height:10px;width:135px;background:#1c2029;border-radius:5px;margin-bottom:20px}.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.preview-card{height:65px;border:1px solid #edf0f3;border-radius:9px;padding:11px}.preview-card b{display:block;width:35px;height:7px;background:#dfe3e8;border-radius:4px;margin-bottom:12px}.preview-card span{display:block;width:45px;height:10px;background:#222631;border-radius:4px}
+        .preview-lower{display:grid;grid-template-columns:1.3fr .7fr;gap:9px;margin-top:9px}.preview-panel{height:150px;border:1px solid #edf0f3;border-radius:9px;padding:12px}.preview-panel em{display:block;width:72px;height:6px;background:#dfe3e8;border-radius:4px;margin-bottom:22px}.preview-chart{height:78px;position:relative;border-bottom:1px solid #edf0f3}.preview-chart:after{content:"";position:absolute;left:0;right:0;bottom:15px;height:46px;border-top:2px solid #5548c9;transform:skewY(-8deg)}.preview-lines{display:grid;gap:10px}.preview-lines span{height:8px;background:#e3e6eb;border-radius:4px}
+        .nexora-footer{height:48px;display:flex;align-items:center;justify-content:flex-end;padding:0 clamp(22px,6vw,88px);color:#7a818d;font-size:11px;font-weight:500}
+        @media(max-width:900px){.nexora-home{height:auto;min-height:100svh;overflow:auto}.nexora-main{grid-template-columns:1fr;padding-top:8vh}.nexora-copy{margin:auto;text-align:center}.nexora-description{margin-left:auto;margin-right:auto}.nexora-preview{justify-self:center;max-width:520px}.nexora-footer{height:42px}}
+        @media(max-width:560px){.nexora-nav{height:66px}.nexora-title{font-size:48px}.nexora-description{font-size:15px}.nexora-preview{display:none}.nexora-main{padding-top:18vh}.nexora-footer{padding-bottom:10px}}
       `}</style>
+
       <nav className="nexora-nav">
-        <Link to="/" className="nexora-brand" aria-label="Nexora home"><span className="nexora-mark">N</span>Nexora</Link>
-        <div className="nexora-nav-actions">
-          <Link to="/login" className="nexora-signin">Sign in</Link>
-          <Link to="/register" className="nexora-button">Create account <ArrowRight size={16} /></Link>
-        </div>
+        <Link to="/" className="nexora-brand" aria-label="Nexora home">
+          <span className="nexora-mark">N</span>
+          Nexora
+        </Link>
+        <Link to="/login" className="nexora-signin">Sign in</Link>
       </nav>
+
       <section className="nexora-main">
         <div className="nexora-copy">
-          <p className="nexora-kicker">A clear workspace for modern teams</p>
           <h1 className="nexora-title">Move work forward,<br />together<span>.</span></h1>
-          <p className="nexora-description">Plan projects, manage tasks, and keep your team aligned in one focused workspace.</p>
-          <div className="nexora-actions"><Link to="/register" className="nexora-button">Create account <ArrowRight size={16}/></Link></div>
+          <p className="nexora-description">Projects, people, and progress in one place.</p>
+          <Link to="/register" className="nexora-button">Create account <ArrowRight size={16} aria-hidden="true" /></Link>
         </div>
-        <div className="nexora-preview" aria-hidden="true"><div className="preview-bar"><i/><i/><i/></div><div className="preview-body"><aside className="preview-side"><strong>Nexora</strong><div className="preview-nav active"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/></aside><div className="preview-content"><div className="preview-heading"/><div className="preview-cards"><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div></div><div className="preview-lower"><div className="preview-panel"><em/><div className="preview-chart"/></div><div className="preview-panel"><em/><div className="preview-lines"><span/><span/><span/><span/></div></div></div></div></div></div>
+
+        <div className="nexora-preview" aria-label="Nexora workspace preview">
+          <div className="preview-bar"><i/><i/><i/></div>
+          <div className="preview-body">
+            <aside className="preview-side">
+              <strong>Nexora</strong>
+              <div className="preview-nav active"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/>
+            </aside>
+            <div className="preview-content">
+              <div className="preview-heading"/>
+              <div className="preview-cards"><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div></div>
+              <div className="preview-lower"><div className="preview-panel"><em/><div className="preview-chart"/></div><div className="preview-panel"><em/><div className="preview-lines"><span/><span/><span/><span/></div></div></div>
+            </div>
+          </div>
+        </div>
       </section>
-      <footer className="nexora-footer"><span>© {new Date().getFullYear()} Nexora</span><span>Project management for focused teams.</span></footer>
+
+      <footer className="nexora-footer">© 2026 Nexora</footer>
     </main>
   );
 }
