@@ -49,42 +49,25 @@ export default function Login() {
         <p className="eyebrow">Welcome back</p>
         <h1 id="login-title">Sign in to your workspace</h1>
         <p className="auth-subtitle">
-          Plan projects, coordinate your team and keep delivery moving from one focused workspace.
+          Keep your projects, people, and progress in one clear workspace.
         </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             Work email
             <div className="input-wrap">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                autoComplete="email"
-                required
-              />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="email" required />
               <Mail size={16} aria-hidden="true" />
             </div>
           </label>
-
           <label>
             Password
             <div className="input-wrap">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Your password"
-                autoComplete="current-password"
-                required
-              />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" autoComplete="current-password" required />
               <LockKeyhole size={16} aria-hidden="true" />
             </div>
           </label>
-
           {error && <div className="form-error" role="alert">{error}</div>}
-
           <button className="primary-button auth-submit" disabled={loading} type="submit">
             {loading ? "Signing in..." : <>Sign in <ArrowRight size={16} /></>}
           </button>
