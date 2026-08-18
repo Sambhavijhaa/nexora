@@ -69,11 +69,7 @@ export default function DashboardLayout() {
 
       <main className="main-content">
         <header className="topbar">
-          <div className="topbar-search" role="search" aria-label="Search">
-            <span aria-hidden="true">⌕</span>
-            <span>Search projects, tasks, people...</span>
-            <kbd>Ctrl K</kbd>
-          </div>
+          <div className="topbar-spacer" aria-hidden="true" />
           <div className="topbar-actions">
             <button className="icon-button" aria-label="View activity" onClick={() => navigate("/activity")} type="button">
               <Bell size={17} aria-hidden="true" />
