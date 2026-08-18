@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, Eye, EyeOff, Mail, UserRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -56,14 +56,12 @@ export default function Register() {
             Full name
             <div className="input-wrap">
               <input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Your name" autoComplete="name" required maxLength={100} />
-              <UserRound size={16} aria-hidden="true" />
             </div>
           </label>
           <label>
             Work email
             <div className="input-wrap">
               <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" autoComplete="email" required />
-              <Mail size={16} aria-hidden="true" />
             </div>
           </label>
           <label>
