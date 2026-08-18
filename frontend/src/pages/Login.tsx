@@ -48,9 +48,7 @@ export default function Login() {
         </div>
         <p className="eyebrow">Welcome back</p>
         <h1 id="login-title">Sign in to your workspace</h1>
-        <p className="auth-subtitle">
-          Keep your projects, people, and progress in one clear workspace.
-        </p>
+        <p className="auth-subtitle">Keep your projects, people, and progress in one clear workspace.</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
@@ -73,9 +71,7 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="auth-footer">
-          Don't have a Nexora workspace? <Link to="/register">Create one</Link>
-        </p>
+        <p className="auth-footer">Don't have a Nexora workspace? <Link to="/register">Create one</Link></p>
       </section>
     </main>
   );
