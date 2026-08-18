@@ -46,9 +46,7 @@ export default function Register() {
   return (
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="register-title">
-        <div className="auth-brand">
-          <strong>Nexora</strong>
-        </div>
+        <div className="auth-brand"><strong>Nexora</strong></div>
         <p className="eyebrow">Get started</p>
         <h1 id="register-title">Create your workspace</h1>
         <p className="auth-subtitle">Keep your projects, people, and progress in one clear workspace.</p>
@@ -70,7 +68,7 @@ export default function Register() {
           </label>
           <label>
             Password
-            <div className="input-wrap" style={{ position: "relative" }}>
+            <div className="input-wrap password-wrap">
               <input
                 type={showPassword ? "text" : "password"}
                 value={form.password}
@@ -79,26 +77,13 @@ export default function Register() {
                 autoComplete="new-password"
                 minLength={8}
                 required
-                style={{ paddingRight: "44px" }}
               />
               <button
                 type="button"
+                className="password-toggle"
                 onClick={() => setShowPassword((visible) => !visible)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                style={{
-                  all: "unset",
-                  position: "absolute",
-                  right: "8px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "32px",
-                  height: "32px",
-                  display: "grid",
-                  placeItems: "center",
-                  boxSizing: "border-box",
-                  cursor: "pointer",
-                  color: "#71809a",
-                }}
+                aria-pressed={showPassword}
               >
                 {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
