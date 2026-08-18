@@ -71,13 +71,34 @@ export default function Register() {
           <label>
             Password
             <div className="input-wrap" style={{ position: "relative" }}>
-              <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required style={{ paddingRight: "44px" }} />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                minLength={8}
+                required
+                style={{ paddingRight: "44px" }}
+              />
               <button
-                className="input-icon-button"
                 type="button"
                 onClick={() => setShowPassword((visible) => !visible)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", width: "32px", height: "32px", display: "grid", placeItems: "center", padding: 0, margin: 0, border: 0, background: "transparent", color: "inherit" }}
+                style={{
+                  all: "unset",
+                  position: "absolute",
+                  right: "8px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "32px",
+                  height: "32px",
+                  display: "grid",
+                  placeItems: "center",
+                  boxSizing: "border-box",
+                  cursor: "pointer",
+                  color: "#71809a",
+                }}
               >
                 {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
