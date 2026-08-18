@@ -1,23 +1,43 @@
 import { useEffect, useState } from "react";
-import { Mail, ShieldCheck, UserRound, Users } from "lucide-react";
+import { Mail, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
 import api from "../api";
 
 type Member = { id: number; name: string; email: string; role: string };
+type StoredUser = { id?: number; role?: string };
+function currentUser(): StoredUser { try { return JSON.parse(localStorage.getItem("nexora_user") || "{}") as StoredUser; } catch { return {}; } }
 
 export default function Team() {
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState("");
-  useEffect(() => {
-    api.get("/team").then(({ data }) => setMembers(data.members || [])).catch((err) => setError(err.response?.data?.message || "Could not load team."));
-  }, []);
+  const user = currentUser();
+  const canManage = user.role === "Admin" || user.role === "Manager";
+  const canChangeRoles = user.role === "Admin";
+
+  const load = () => api.get("/team").then(({ data }) => setMembers(data.members || [])).catch((err) => setError(err.response?.data?.message || "Could not load team."));
+  useEffect(() => { load(); }, []);
+
+  async function changeRole(member: Member, role: string) {
+    if (!canChangeRoles) return;
+    setError("");
+    try { await api.patch(`/team/${member.id}`, { role }); await load(); }
+    catch (err: any) { setError(err.response?.data?.message || "Could not update member role."); }
+  }
+
+  async function removeMember(member: Member) {
+    if (!canChangeRoles) return;
+    if (!window.confirm(`Remove ${member.name} from this workspace?`)) return;
+    setError("");
+    try { await api.delete(`/team/${member.id}`); await load(); }
+    catch (err: any) { setError(err.response?.data?.message || "Could not remove member."); }
+  }
 
   return (
     <div className="workspace-page">
       <div className="page-heading">
-        <div><p className="eyebrow">People</p><h2>Team</h2><p>Understand who is part of your workspace and the access level they hold.</p></div>
-        <button className="primary-button" onClick={() => setError("Invitations will be connected to the workspace email service next.")}><Mail size={15}/> Invite member</button>
+        <div><p className="eyebrow">People</p><h2>Team</h2><p>See everyone in your workspace and the access level they hold.</p></div>
+        {canManage && <button className="primary-button" onClick={() => setError("The invitation endpoint is ready; connect your email provider when you want live invitations.")}><Mail size={15}/> Invite member</button>}
       </div>
-      {error && <div className="form-error page-alert">{error}</div>}
+      {error && <div className="form-error page-alert" role="alert">{error}</div>}
 
       <div className="stats-grid">
         <div className="stat-card"><div className="stat-icon"><Users size={18}/></div><p>Workspace members</p><h3>{members.length}</h3></div>
@@ -29,7 +49,14 @@ export default function Team() {
           <div className="panel member-card" key={m.id}>
             <div className="member-avatar"><UserRound size={17}/></div>
             <div><h3>{m.name}</h3><p>{m.email}</p></div>
-            <span className="role-badge"><ShieldCheck size={12}/> {m.role}</span>
+            {canChangeRoles ? (
+              <div className="member-actions">
+                <select className="role-select" value={m.role} onChange={(e) => changeRole(m, e.target.value)} aria-label={`Role for ${m.name}`}>
+                  <option>Admin</option><option>Manager</option><option>Member</option><option>Viewer</option>
+                </select>
+                <button className="danger-button" onClick={() => removeMember(m)} aria-label={`Remove ${m.name}`}><Trash2 size={14}/></button>
+              </div>
+            ) : <span className="role-badge"><ShieldCheck size={12}/> {m.role}</span>}
           </div>
         ))}
       </div>
