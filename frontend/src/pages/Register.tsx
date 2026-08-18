@@ -47,7 +47,6 @@ export default function Register() {
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="register-title">
         <div className="auth-brand">
-          <span className="brand-mark" aria-hidden="true">N</span>
           <strong>Nexora</strong>
         </div>
         <p className="eyebrow">Get started</p>
