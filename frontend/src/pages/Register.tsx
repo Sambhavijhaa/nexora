@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Mail, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -52,9 +52,7 @@ export default function Register() {
         </div>
         <p className="eyebrow">Get started</p>
         <h1 id="register-title">Create your workspace</h1>
-        <p className="auth-subtitle">
-          Keep your projects, people, and progress in one clear workspace.
-        </p>
+        <p className="auth-subtitle">Keep your projects, people, and progress in one clear workspace.</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
@@ -76,7 +74,7 @@ export default function Register() {
             <div className="input-wrap">
               <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required />
               <button className="input-icon-button" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>
-                <LockKeyhole size={16} aria-hidden="true" />
+                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
             </div>
           </label>
@@ -86,9 +84,7 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="auth-footer">
-          Already have a Nexora workspace? <Link to="/login">Sign in</Link>
-        </p>
+        <p className="auth-footer">Already have a Nexora workspace? <Link to="/login">Sign in</Link></p>
       </section>
     </main>
   );
