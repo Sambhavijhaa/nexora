@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -67,6 +67,7 @@ export default function Register() {
           <label>
             Password
             <div className="input-wrap password-wrap">
+              <LockKeyhole className="password-lock-icon" size={16} aria-hidden="true" />
               <input
                 type={showPassword ? "text" : "password"}
                 value={form.password}
