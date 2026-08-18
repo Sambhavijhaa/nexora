@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
 function getApiError(error: unknown, fallback: string) {
-  const err = error as { response?: { data?: { message?: string } }; message?: string };
+  const err = error as { response?: { data?: { message?: string } } };
   if (err.response?.data?.message) return err.response.data.message;
   if (!err.response) return "We couldn't reach Nexora right now. Please check your connection and try again.";
   return fallback;
@@ -50,68 +50,37 @@ export default function Register() {
           <span className="brand-mark" aria-hidden="true">N</span>
           <strong>Nexora</strong>
         </div>
-        <p className="eyebrow">Start shipping</p>
+        <p className="eyebrow">Get started</p>
         <h1 id="register-title">Create your workspace</h1>
         <p className="auth-subtitle">
-          One focused place for projects, tasks, team collaboration and delivery analytics.
+          Keep your projects, people, and progress in one clear workspace.
         </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             Full name
             <div className="input-wrap">
-              <input
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                placeholder="Your name"
-                autoComplete="name"
-                required
-                maxLength={100}
-              />
+              <input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Your name" autoComplete="name" required maxLength={100} />
               <UserRound size={16} aria-hidden="true" />
             </div>
           </label>
-
           <label>
             Work email
             <div className="input-wrap">
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="you@company.com"
-                autoComplete="email"
-                required
-              />
+              <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" autoComplete="email" required />
               <Mail size={16} aria-hidden="true" />
             </div>
           </label>
-
           <label>
             Password
             <div className="input-wrap">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => update("password", e.target.value)}
-                placeholder="At least 8 characters"
-                autoComplete="new-password"
-                minLength={8}
-                required
-              />
-              <button
-                className="input-icon-button"
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
+              <input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required />
+              <button className="input-icon-button" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>
                 <LockKeyhole size={16} aria-hidden="true" />
               </button>
             </div>
           </label>
-
           {error && <div className="form-error" role="alert">{error}</div>}
-
           <button className="primary-button auth-submit" disabled={loading} type="submit">
             {loading ? "Creating account..." : <>Create account <ArrowRight size={16} /></>}
           </button>
