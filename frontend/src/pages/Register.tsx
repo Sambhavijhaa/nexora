@@ -82,10 +82,10 @@ export default function Register() {
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? "Password is visible. Hide password" : "Password is hidden. Show password"}
                 aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                {showPassword ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
               </button>
             </div>
           </label>
