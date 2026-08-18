@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -55,7 +55,6 @@ export default function Login() {
             Work email
             <div className="input-wrap">
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="email" required />
-              <Mail size={16} aria-hidden="true" />
             </div>
           </label>
           <label>
