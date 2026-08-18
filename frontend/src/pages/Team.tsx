@@ -3,32 +3,51 @@ import { Mail, ShieldCheck, Trash2, UserRound, Users } from "lucide-react";
 import api from "../api";
 
 type Member = { id: number; name: string; email: string; role: string };
-type StoredUser = { id?: number; role?: string };
-function currentUser(): StoredUser { try { return JSON.parse(localStorage.getItem("nexora_user") || "{}") as StoredUser; } catch { return {}; } }
 
 export default function Team() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [workspaceRole, setWorkspaceRole] = useState("");
   const [error, setError] = useState("");
-  const user = currentUser();
-  const canManage = user.role === "Admin" || user.role === "Manager";
-  const canChangeRoles = user.role === "Admin";
 
-  const load = () => api.get("/team").then(({ data }) => setMembers(data.members || [])).catch((err) => setError(err.response?.data?.message || "Could not load team."));
+  const canManage = workspaceRole === "Admin" || workspaceRole === "Manager";
+  const canChangeRoles = workspaceRole === "Admin";
+
+  const load = async () => {
+    try {
+      const [{ data: teamData }, { data: workspaceData }] = await Promise.all([
+        api.get("/team"),
+        api.get("/workspace"),
+      ]);
+      setMembers(teamData.members || []);
+      setWorkspaceRole(workspaceData.workspace?.role || "");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Could not load team.");
+    }
+  };
+
   useEffect(() => { load(); }, []);
 
   async function changeRole(member: Member, role: string) {
     if (!canChangeRoles) return;
     setError("");
-    try { await api.patch(`/team/${member.id}`, { role }); await load(); }
-    catch (err: any) { setError(err.response?.data?.message || "Could not update member role."); }
+    try {
+      await api.patch(`/team/${member.id}`, { role });
+      await load();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Could not update member role.");
+    }
   }
 
   async function removeMember(member: Member) {
     if (!canChangeRoles) return;
     if (!window.confirm(`Remove ${member.name} from this workspace?`)) return;
     setError("");
-    try { await api.delete(`/team/${member.id}`); await load(); }
-    catch (err: any) { setError(err.response?.data?.message || "Could not remove member."); }
+    try {
+      await api.delete(`/team/${member.id}`);
+      await load();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Could not remove member.");
+    }
   }
 
   return (
