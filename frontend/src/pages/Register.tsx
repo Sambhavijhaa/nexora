@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -16,7 +16,6 @@ export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   function update(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -69,7 +68,7 @@ export default function Register() {
             <div className="input-wrap password-wrap">
               <LockKeyhole className="password-lock-icon" size={16} aria-hidden="true" />
               <input
-                type={showPassword ? "text" : "password"}
+                type="password"
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
                 placeholder="At least 8 characters"
@@ -77,15 +76,6 @@ export default function Register() {
                 minLength={8}
                 required
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Password is visible. Hide password" : "Password is hidden. Show password"}
-                aria-pressed={showPassword}
-              >
-                {showPassword ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
-              </button>
             </div>
           </label>
           {error && <div className="form-error" role="alert">{error}</div>}
