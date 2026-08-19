@@ -1,25 +1,27 @@
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const page: React.CSSProperties = { minHeight: "100svh", background: "#f7f8fa", color: "#11141b", display: "flex", flexDirection: "column", overflowX: "hidden" };
+const nav: React.CSSProperties = { minHeight: 68, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 18px", background: "#fff", borderBottom: "1px solid #e1e4e8" };
+const brand: React.CSSProperties = { color: "#11141b", textDecoration: "none", fontSize: 20, fontWeight: 800, display: "flex", alignItems: "center", gap: 9 };
 
 export default function Landing() {
   return (
-    <main className="nexora-home">
-      <style>{`
-        .nexora-home{min-height:100svh;background:#f7f8fa;color:#171a21;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column;overflow-x:hidden}
-        .nexora-nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(22px,6vw,88px);border-bottom:1px solid #e4e7eb}
-        .nexora-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#151821!important;font-family:Manrope,Inter,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.045em;opacity:1!important}
-        .nexora-mark{width:34px;height:34px;border-radius:9px;background:#5548c9;color:#fff!important;display:grid;place-items:center;font-size:14px;font-weight:800;opacity:1!important}
-        .nexora-actions{display:flex;align-items:center;gap:10px}.nexora-signin,.nexora-register{font-size:14px;font-weight:700;text-decoration:none;border-radius:9px;padding:10px 14px;opacity:1!important;visibility:visible!important}.nexora-signin{color:#20242d!important}.nexora-register{background:#5548c9;color:#fff!important}
-        .nexora-main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,.88fr);align-items:center;gap:clamp(42px,7vw,104px);padding:clamp(28px,5vh,60px) clamp(22px,8vw,120px)}
-        .nexora-copy{max-width:680px}.nexora-title{font-family:Manrope,Inter,sans-serif;font-size:clamp(50px,6.1vw,82px);line-height:1.01;letter-spacing:-.065em;margin:0;color:#11141b!important;font-weight:800;opacity:1!important;visibility:visible!important}.nexora-title span{color:#5548c9!important}.nexora-description{font-size:clamp(16px,1.35vw,19px);line-height:1.6;color:#4f5663!important;max-width:510px;margin:24px 0 30px;font-weight:500;opacity:1!important;visibility:visible!important}.nexora-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#5548c9;color:#fff!important;text-decoration:none;border-radius:9px;padding:13px 18px;font-size:14px;font-weight:750;opacity:1!important;visibility:visible!important}
-        .nexora-preview{width:min(100%,550px);justify-self:end;background:#fff;border:1px solid #e0e3e8;border-radius:15px;box-shadow:0 24px 65px rgba(23,28,38,.10);overflow:hidden}.preview-bar{height:38px;border-bottom:1px solid #edf0f3;display:flex;align-items:center;padding:0 14px;gap:6px}.preview-bar i{width:7px;height:7px;border-radius:50%;background:#cfd4dc}.preview-body{display:grid;grid-template-columns:108px 1fr;min-height:330px}.preview-side{background:#fafbfc;border-right:1px solid #edf0f3;padding:18px 11px}.preview-side strong{display:block;font:800 11px Manrope,Inter,sans-serif;color:#171a21;margin:0 5px 20px}.preview-nav{height:9px;background:#e6e9ee;border-radius:4px;margin:12px 5px}.preview-nav.active{height:28px;background:#eeecff}.preview-content{padding:23px}.preview-heading{height:10px;width:135px;background:#1c2029;border-radius:5px;margin-bottom:20px}.preview-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.preview-card{height:65px;border:1px solid #edf0f3;border-radius:9px;padding:11px}.preview-card b{display:block;width:35px;height:7px;background:#dfe3e8;border-radius:4px;margin-bottom:12px}.preview-card span{display:block;width:45px;height:10px;background:#222631;border-radius:4px}.preview-lower{display:grid;grid-template-columns:1.3fr .7fr;gap:9px;margin-top:9px}.preview-panel{height:150px;border:1px solid #edf0f3;border-radius:9px;padding:12px}.preview-panel em{display:block;width:72px;height:6px;background:#dfe3e8;border-radius:4px;margin-bottom:22px}.preview-chart{height:78px;border-bottom:1px solid #edf0f3}.preview-lines{display:grid;gap:10px}.preview-lines span{height:8px;background:#e3e6eb;border-radius:4px}
-        .nexora-footer{min-height:48px;display:flex;align-items:center;justify-content:flex-end;padding:0 clamp(22px,6vw,88px);color:#7a818d!important;font-size:11px;opacity:1!important}
-        @media(max-width:900px){.nexora-main{grid-template-columns:1fr;gap:38px;padding:52px 28px 38px;text-align:center}.nexora-copy{margin:auto}.nexora-description{margin:20px auto 26px}.nexora-preview{justify-self:center;width:min(100%,520px)}}
-        @media(max-width:560px){.nexora-nav{min-height:64px;padding:0 16px}.nexora-brand{font-size:18px;gap:8px}.nexora-mark{width:31px;height:31px}.nexora-actions{gap:4px}.nexora-signin,.nexora-register{font-size:13px;padding:9px 10px}.nexora-main{display:flex;flex-direction:column;justify-content:flex-start;gap:0;padding:56px 20px 34px;text-align:left;min-height:calc(100svh - 112px)}.nexora-copy{width:100%;max-width:420px;margin:0 auto}.nexora-title{font-size:clamp(40px,12vw,52px);line-height:1.04;letter-spacing:-.06em}.nexora-description{font-size:16px;line-height:1.55;margin:20px 0 28px;max-width:330px}.nexora-button{width:100%;max-width:none;padding:15px 18px;font-size:14px}.nexora-preview{display:none}.nexora-footer{justify-content:center;padding:10px 18px;font-size:10px}}
-      `}</style>
-      <nav className="nexora-nav"><Link to="/" className="nexora-brand"><span className="nexora-mark">N</span>Nexora</Link><div className="nexora-actions"><Link to="/login" className="nexora-signin">Sign in</Link><Link to="/register" className="nexora-register">Create account</Link></div></nav>
-      <section className="nexora-main"><div className="nexora-copy"><h1 className="nexora-title">Move work forward,<br/>together<span>.</span></h1><p className="nexora-description">Projects, people, and progress in one place.</p><Link to="/register" className="nexora-button">Create account <ArrowRight size={16} aria-hidden="true"/></Link></div><div className="nexora-preview"><div className="preview-bar"><i/><i/><i/></div><div className="preview-body"><aside className="preview-side"><strong>Nexora</strong><div className="preview-nav active"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/><div className="preview-nav"/></aside><div className="preview-content"><div className="preview-heading"/><div className="preview-cards"><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div><div className="preview-card"><b/><span/></div></div><div className="preview-lower"><div className="preview-panel"><em/><div className="preview-chart"/></div><div className="preview-panel"><em/><div className="preview-lines"><span/><span/><span/><span/></div></div></div></div></div></div></section>
-      <footer className="nexora-footer">© 2026 Nexora</footer>
+    <main style={page}>
+      <nav style={nav}>
+        <Link to="/" style={brand}><span style={{ width: 32, height: 32, borderRadius: 8, display: "grid", placeItems: "center", background: "#5548c9", color: "#fff", fontSize: 14 }}>N</span>Nexora</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Link to="/login" style={{ color: "#20242d", textDecoration: "none", fontSize: 14, fontWeight: 700, padding: "9px 10px" }}>Sign in</Link>
+          <Link to="/register" style={{ color: "#fff", background: "#5548c9", textDecoration: "none", fontSize: 14, fontWeight: 700, padding: "10px 12px", borderRadius: 8 }}>Create account</Link>
+        </div>
+      </nav>
+      <section style={{ flex: 1, width: "100%", maxWidth: 1100, margin: "0 auto", padding: "clamp(70px,12vh,130px) 22px 60px" }}>
+        <div style={{ maxWidth: 700 }}>
+          <p style={{ margin: "0 0 14px", color: "#5548c9", fontSize: 12, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase" }}>Nexora workspace</p>
+          <h1 style={{ margin: 0, color: "#11141b", fontSize: "clamp(42px,8vw,76px)", lineHeight: 1.03, letterSpacing: "-.055em", fontWeight: 800 }}>Move work forward,<br />together<span style={{ color: "#5548c9" }}>.</span></h1>
+          <p style={{ margin: "22px 0 0", maxWidth: 500, color: "#4f5663", fontSize: "clamp(16px,2vw,19px)", lineHeight: 1.6 }}>Projects, people, and progress in one place.</p>
+        </div>
+      </section>
+      <footer style={{ padding: "12px 18px", color: "#6b7280", background: "#fff", borderTop: "1px solid #e1e4e8", fontSize: 11, textAlign: "center" }}>© 2026 Nexora</footer>
     </main>
   );
 }
