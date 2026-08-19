@@ -1,13 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Bell, CheckSquare, FolderKanban, LayoutDashboard, LogOut, Settings, Users, BarChart3, Activity } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 
 const navigation = [
-  { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
-  { name: "Projects", path: "/projects", icon: FolderKanban },
-  { name: "Tasks", path: "/tasks", icon: CheckSquare },
-  { name: "Team", path: "/team", icon: Users },
-  { name: "Analytics", path: "/analytics", icon: BarChart3 },
-  { name: "Activity", path: "/activity", icon: Activity },
+  { name: "Dashboard", path: "/dashboard" },
+  { name: "Projects", path: "/projects" },
+  { name: "Tasks", path: "/tasks" },
+  { name: "Team", path: "/team" },
+  { name: "Analytics", path: "/analytics" },
+  { name: "Activity", path: "/activity" },
 ];
 
 type StoredUser = { name?: string; role?: string; email?: string };
@@ -30,11 +30,11 @@ export default function DashboardLayout() {
         <div className="brand"><div className="brand-mark">N</div><span>Nexora</span></div>
         <nav className="sidebar-nav">
           <p className="nav-label">Workspace</p>
-          {navigation.map(({ name, path, icon: Icon }) => <NavLink key={path} to={path} title={name} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Icon size={17}/><span>{name}</span></NavLink>)}
+          {navigation.map(({ name, path }) => <NavLink key={path} to={path} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><span>{name}</span></NavLink>)}
           <p className="nav-label settings-label">Account</p>
-          <NavLink to="/notifications" title="Notifications" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Bell size={17}/><span>Notifications</span></NavLink>
-          <NavLink to="/settings" title="Settings" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Settings size={17}/><span>Settings</span></NavLink>
-          <button className="nav-item logout-nav" onClick={logout} type="button"><LogOut size={17}/><span>Sign out</span></button>
+          <NavLink to="/notifications" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><span>Notifications</span></NavLink>
+          <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><span>Settings</span></NavLink>
+          <button className="nav-item logout-nav" onClick={logout} type="button"><span>Sign out</span></button>
         </nav>
         <div className="sidebar-user"><div className="avatar">{userInitials}</div><div className="user-copy"><strong>{user.name || "User"}</strong><span>{user.role || "Member"}</span></div></div>
       </aside>
