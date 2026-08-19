@@ -5,13 +5,17 @@ import axios, { type AxiosRequestConfig } from "axios";
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
 const API_BASE_URL = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
 
+// Render may need extra time to wake the backend from an idle state.
+// Keep normal requests generous enough that the first login does not fail.
+const API_TIMEOUT = 60000;
+
 type RetryableConfig = AxiosRequestConfig & {
   _retry?: boolean;
 };
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
   },
@@ -75,7 +79,7 @@ api.interceptors.response.use(
             Authorization: `Bearer ${refreshToken}`,
             "Content-Type": "application/json",
           },
-          timeout: 20000,
+          timeout: API_TIMEOUT,
         },
       );
 
