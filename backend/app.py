@@ -1108,19 +1108,63 @@ def analytics():
 @app.get("/api/activity")
 @jwt_required()
 def get_activity():
-    @app.delete("/api/activity/<int:activity_id>")
+    user_id = int(get_jwt_identity())
+    membership, workspace = current_workspace_context(user_id)
+
+    if not membership:
+        return error("Workspace not found.", 404, "WORKSPACE_NOT_FOUND")
+
+    activities = (
+        Activity.query
+        .join(Membership, Membership.user_id == Activity.user_id)
+        .filter(Membership.workspace_id == workspace.id)
+        .order_by(Activity.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    return ok({"activity": [activity_payload(a) for a in activities]})
+
+
+@app.delete("/api/activity/<int:activity_id>")
 @jwt_required()
 def delete_activity(activity_id):
     user_id = int(get_jwt_identity())
     membership, workspace = current_workspace_context(user_id)
 
-    # Only Admins can delete activity
     if not membership or membership.role != "Admin":
         return error(
             "Only Admins can delete activity.",
             403,
             "FORBIDDEN"
         )
+
+    activity = (
+        db.session.query(Activity)
+        .join(
+            Membership,
+            Membership.user_id == Activity.user_id
+        )
+        .filter(
+            Activity.id == activity_id,
+            Membership.workspace_id == workspace.id
+        )
+        .first()
+    )
+
+    if not activity:
+        return error(
+            "Activity not found.",
+            404,
+            "ACTIVITY_NOT_FOUND"
+        )
+
+    db.session.delete(activity)
+    db.session.commit()
+
+    return ok({
+        "message": "Activity deleted successfully."
+    })
 
     # Find activity belonging to the current workspace
     activity = (
