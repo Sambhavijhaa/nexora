@@ -5,6 +5,7 @@ import "./index.css";
 import "./workspace.css";
 import "./theme.css";
 import "./workspace-polish.css";
+import "./mobile-responsive.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(
