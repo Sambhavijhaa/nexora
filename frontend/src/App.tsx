@@ -5,6 +5,7 @@ import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Notifications from "./pages/Notifications";
 import Projects from "./pages/Projects";
 import Register from "./pages/Register";
 import Settings from "./pages/Settings";
@@ -14,7 +15,6 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
-
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
@@ -28,6 +28,7 @@ export default function App() {
           <Route path="/team" element={<Team />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
