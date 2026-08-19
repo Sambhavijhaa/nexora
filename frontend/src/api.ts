@@ -1,8 +1,9 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-const API_BASE_URL = import.meta.env.PROD
-  ? "https://nexora-backend-7i97.onrender.com/api"
-  : (import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api");
+// The production API is configurable so the same frontend build can be
+// deployed to Vercel preview/production URLs without changing source code.
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_BASE_URL = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
 
 type RetryableConfig = AxiosRequestConfig & {
   _retry?: boolean;
@@ -10,7 +11,10 @@ type RetryableConfig = AxiosRequestConfig & {
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 20000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 api.interceptors.request.use((config) => {
@@ -49,13 +53,11 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Another request is already refreshing the token.
     if (refreshing) {
       return new Promise((resolve) => {
         queued.push((token) => {
           original.headers = original.headers ?? {};
           original.headers.Authorization = `Bearer ${token}`;
-
           resolve(api(original));
         });
       });
@@ -71,16 +73,20 @@ api.interceptors.response.use(
         {
           headers: {
             Authorization: `Bearer ${refreshToken}`,
+            "Content-Type": "application/json",
           },
+          timeout: 20000,
         },
       );
 
       const token = data.accessToken;
+      if (!token) {
+        throw new Error("Refresh endpoint returned no access token.");
+      }
 
       localStorage.setItem("nexora_access_token", token);
       localStorage.setItem("nexora_token", token);
 
-      // Retry requests waiting for the refreshed token.
       queued.forEach((resume) => resume(token));
       queued = [];
 
@@ -96,9 +102,7 @@ api.interceptors.response.use(
         "nexora_refresh_token",
         "nexora_token",
         "nexora_user",
-      ].forEach((key) => {
-        localStorage.removeItem(key);
-      });
+      ].forEach((key) => localStorage.removeItem(key));
 
       return Promise.reject(refreshError);
     } finally {
