@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", path: "/dashboard" },
