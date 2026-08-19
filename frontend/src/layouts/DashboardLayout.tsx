@@ -26,11 +26,6 @@ export default function DashboardLayout() {
     navigate("/login", { replace: true });
   }
 
-  function go(path: string) {
-    navigate(path);
-    setMobileNavOpen(false);
-  }
-
   return (
     <div className="app-shell">
       <style>{`
