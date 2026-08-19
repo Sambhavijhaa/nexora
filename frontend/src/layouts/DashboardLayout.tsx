@@ -32,16 +32,19 @@ export default function DashboardLayout() {
         .mobile-menu-button,.mobile-nav-close,.mobile-nav-overlay{display:none}
         @media(max-width:700px){
           .app-shell{min-width:0;overflow-x:hidden}
-          .sidebar{width:260px;min-width:260px;flex:0 0 260px;padding:18px 12px 12px;position:fixed;left:0;top:0;height:100svh;z-index:1000;overflow-y:auto;transform:translateX(${mobileNavOpen ? "0" : "-105%"});transition:transform .22s ease;box-shadow:8px 0 30px rgba(0,0,0,.18)}
+          .sidebar{width:280px!important;min-width:280px!important;flex:0 0 280px!important;padding:18px 12px 12px!important;position:fixed!important;left:0;top:0;height:100svh;z-index:1000;overflow-y:auto;transform:translateX(${mobileNavOpen ? "0" : "-105%"});transition:transform .22s ease;box-shadow:8px 0 30px rgba(0,0,0,.18);background:#fff!important;border-right:1px solid #e5e7eb!important;color:#171a21!important}
           .mobile-nav-overlay{display:${mobileNavOpen ? "block" : "none"};position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:999}
-          .mobile-nav-close{display:flex;position:absolute;right:12px;top:12px;width:34px;height:34px;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
-          .brand{padding:2px 8px 22px;font-size:18px;gap:8px}.brand-mark{width:32px;height:32px;border-radius:8px}
-          .nav-label{margin-left:8px;margin-right:8px;font-size:10px}.settings-label{margin-top:20px}
-          .nav-item{padding:11px 10px;font-size:14px;gap:8px;white-space:nowrap}
-          .sidebar-user{padding:14px 7px 2px}.avatar{width:34px;height:34px}.user-copy strong{font-size:12px}.user-copy span{font-size:10px}
+          .mobile-nav-close{display:flex;position:absolute;right:12px;top:12px;width:34px;height:34px;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:#171a21;cursor:pointer}
+          .brand{padding:2px 8px 28px!important;font-size:18px!important;gap:8px;color:#171a21!important}.brand-mark{width:40px!important;height:40px!important;border-radius:10px}
+          .sidebar-nav{display:flex!important;visibility:visible!important;opacity:1!important;gap:5px!important}
+          .nav-label{margin-left:8px;margin-right:8px;font-size:10px;color:#8a8f9b!important}.settings-label{margin-top:20px}
+          .nav-item{display:flex!important;visibility:visible!important;opacity:1!important;padding:12px 10px!important;font-size:15px!important;gap:8px;white-space:nowrap;color:#343944!important;background:transparent!important}
+          .nav-item:hover{color:#171a21!important;background:#f3f4f7!important}.nav-item.active{color:#4338a8!important;background:#eeecff!important;box-shadow:inset 3px 0 0 #5548c9!important}
+          .logout-nav{text-align:left;color:#343944!important}
+          .sidebar-user{padding:14px 7px 2px!important;border-top:1px solid #e5e7eb!important}.avatar{width:34px;height:34px;background:#eeecff;color:#5548c9}.user-copy strong{font-size:12px;color:#252936!important}.user-copy span{font-size:10px;color:#737985!important}
           .main-content{min-width:0;width:100%;flex:1}
           .topbar{height:58px;padding:0 12px}.topbar-actions{gap:7px}.icon-button{width:34px;height:34px}.top-avatar{width:32px;height:32px}
-          .mobile-menu-button{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border:1px solid var(--border-color,#e5e7eb);border-radius:9px;background:var(--surface,#fff);color:inherit;cursor:pointer}
+          .mobile-menu-button{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:9px;background:#fff;color:#252936;cursor:pointer}
           .topbar-spacer{display:flex;align-items:center;gap:8px}
           .page-content{padding:20px 14px 36px;max-width:none}
           .welcome-section,.page-heading{align-items:flex-start;flex-direction:column;gap:14px;margin-bottom:20px}.welcome-section h2,.page-heading h2,.placeholder-page h2{font-size:24px}
@@ -50,7 +53,7 @@ export default function DashboardLayout() {
           .panel{padding:15px}.form-row{flex-direction:column}.workspace-input{width:100%;min-width:0}.primary-button{width:100%}
           .chart-bars{height:180px}.project-card{min-height:0}
         }
-        @media(max-width:430px){.sidebar{width:260px;min-width:260px;flex-basis:260px}.brand span{font-size:17px}.nav-item{font-size:14px;padding:10px 9px}.page-content{padding-left:11px;padding-right:11px}.stats-grid{gap:7px}.stat-card{padding:11px}.stat-card h3{font-size:19px}}
+        @media(max-width:430px){.sidebar{width:280px!important;min-width:280px!important;flex-basis:280px!important}.brand span{font-size:17px}.nav-item{font-size:14px!important;padding:11px 9px!important}.page-content{padding-left:11px;padding-right:11px}.stats-grid{gap:7px}.stat-card{padding:11px}.stat-card h3{font-size:19px}}
       `}</style>
       <div className="mobile-nav-overlay" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
       <aside className="sidebar" aria-label="Primary navigation">
