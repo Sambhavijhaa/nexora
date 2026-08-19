@@ -776,6 +776,7 @@ def get_projects():
         .filter(ProjectWorkspace.workspace_id == workspace.id)
         .order_by(Project.created_at.desc())
         .all()
+    )
     return ok({"projects": [project_payload(p, workspace.id) for p in projects]})
 
 
