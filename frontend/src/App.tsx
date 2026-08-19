@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Notifications from "./pages/Notifications";
+import ProjectDetails from "./pages/ProjectDetails";
 import Projects from "./pages/Projects";
 import Register from "./pages/Register";
 import Settings from "./pages/Settings";
@@ -15,24 +16,11 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
-  return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/activity" element={<Activity />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Route>
-      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
-    </Routes>
-  );
+  return <Routes>
+    <Route path="/" element={<Landing />} /><Route path="/login" element={<Login />} /><Route path="/register" element={<Register />} />
+    <Route element={<ProtectedRoute />}><Route element={<DashboardLayout />}>
+      <Route path="/dashboard" element={<Dashboard />} /><Route path="/projects" element={<Projects />} /><Route path="/projects/:id" element={<ProjectDetails />} /><Route path="/tasks" element={<Tasks />} /><Route path="/team" element={<Team />} /><Route path="/analytics" element={<Analytics />} /><Route path="/activity" element={<Activity />} /><Route path="/notifications" element={<Notifications />} /><Route path="/settings" element={<Settings />} />
+    </Route></Route>
+    <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} replace />} />
+  </Routes>;
 }
