@@ -75,7 +75,7 @@ jwt.init_app(app)
 # A wildcard is only used outside production to make local development easy.
 configured_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "").split(",") if x.strip()]
 if IS_PRODUCTION and not configured_origins:
-    configured_origins = ["https://nexora.vercel.app"]
+    configured_origins = ["https://nexora-ops.vercel.app"]
 CORS(
     app,
     resources={r"/api/*": {"origins": configured_origins or "*"}},
