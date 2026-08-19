@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, CheckCircle2, FolderKanban, ListTodo, Users } from "lucide-react";
+import { CheckCircle2, FolderKanban, ListTodo, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api";
 
@@ -22,26 +22,27 @@ export default function Dashboard() {
   }, []);
 
   const stats = summary ? [
-    { title: "Active projects", value: summary.stats.projects, change: "Live", icon: FolderKanban },
-    { title: "Active tasks", value: summary.stats.tasks - summary.stats.completed, change: "Across workspace", icon: ListTodo },
-    { title: "Completed", value: summary.stats.completed, change: "Delivery", icon: CheckCircle2 },
-    { title: "Team members", value: summary.stats.teamMembers, change: "Workspace", icon: Users },
+    { title: "Projects", value: summary.stats.projects, icon: FolderKanban },
+    { title: "Open tasks", value: summary.stats.tasks - summary.stats.completed, icon: ListTodo },
+    { title: "Completed", value: summary.stats.completed, icon: CheckCircle2 },
+    { title: "Team", value: summary.stats.teamMembers, icon: Users },
   ] : [];
 
   const bars = useMemo(() => {
     if (!summary) return [20, 35, 28, 55, 44, 68, 58];
     const total = Math.max(summary.stats.tasks, 1);
     const done = summary.taskBreakdown.done;
-    return [25, 34, 29, Math.max(30, done / total * 100), 52, Math.max(38, done / total * 100), Math.max(42, done / total * 100)];
+    const completion = Math.max(25, done / total * 100);
+    return [25, 34, 29, completion, 52, completion, Math.max(42, completion)];
   }, [summary]);
 
   return (
     <div className="dashboard">
       <div className="welcome-section">
         <div>
-          <p className="eyebrow">Workspace overview</p>
-          <h2>Good morning, {user.name || "there"} <span aria-hidden="true">👋</span></h2>
-          <p>Plan projects, coordinate your team and keep delivery moving from one workspace.</p>
+          <p className="eyebrow">Overview</p>
+          <h2>Good morning, {user.name || "there"}</h2>
+          <p>Everything your team needs to keep projects moving.</p>
         </div>
         <Link className="primary-button" to="/projects">+ New Project</Link>
       </div>
@@ -49,10 +50,11 @@ export default function Dashboard() {
       {error && <div className="form-error page-alert">{error}</div>}
 
       <div className="stats-grid">
-        {stats.map(({ title, value, change, icon: Icon }) => (
+        {stats.map(({ title, value, icon: Icon }) => (
           <div className="stat-card" key={title}>
-            <div className="stat-top"><div className="stat-icon"><Icon size={18} /></div><span className="stat-change"><ArrowUpRight size={13} /> {change}</span></div>
-            <p>{title}</p><h3>{value}</h3>
+            <div className="stat-icon"><Icon size={17} /></div>
+            <p>{title}</p>
+            <h3>{value}</h3>
           </div>
         ))}
       </div>
@@ -60,8 +62,8 @@ export default function Dashboard() {
       <div className="analytics-grid">
         <div className="panel">
           <div className="panel-header">
-            <div><p className="eyebrow">Performance</p><h3>Task completion</h3></div>
-            <span className="text-button">Last 7 days</span>
+            <div><p className="eyebrow">Progress</p><h3>Task completion</h3></div>
+            <span className="text-button">7 days</span>
           </div>
           <div className="chart-bars">
             {bars.map((height, index) => <div className="bar" key={index} style={{ height: `${height}%` }} />)}
@@ -70,14 +72,14 @@ export default function Dashboard() {
         </div>
 
         <div className="panel">
-          <div className="panel-header"><div><p className="eyebrow">Task health</p><h3>Work distribution</h3></div></div>
+          <div className="panel-header"><div><p className="eyebrow">Tasks</p><h3>Work distribution</h3></div></div>
           {summary ? (
             <div className="distribution">
               <div className="distribution-row"><span className="distribution-dot" />To do <strong>{summary.taskBreakdown.todo}</strong></div>
               <div className="distribution-row"><span className="distribution-dot" />In progress <strong>{summary.taskBreakdown.inProgress}</strong></div>
               <div className="distribution-row"><span className="distribution-dot" />Completed <strong>{summary.taskBreakdown.done}</strong></div>
             </div>
-          ) : <div className="empty-state">Loading workspace metrics...</div>}
+          ) : <div className="empty-state">Loading metrics...</div>}
         </div>
       </div>
 
@@ -93,10 +95,10 @@ export default function Dashboard() {
         </div>
 
         <div className="panel">
-          <div className="panel-header"><div><p className="eyebrow">Timeline</p><h3>Recent activity</h3></div><Link className="text-button" to="/activity">View all</Link></div>
+          <div className="panel-header"><div><p className="eyebrow">Activity</p><h3>Recent activity</h3></div><Link className="text-button" to="/activity">View all</Link></div>
           {summary?.activity.length ? summary.activity.map((item) => (
             <div className="activity" key={item.id}><div className="activity-avatar">N</div><div><strong>{item.action}</strong><span>{item.context}</span></div></div>
-          )) : <div className="empty-state">Your workspace activity will appear here.</div>}
+          )) : <div className="empty-state">Workspace activity will appear here.</div>}
         </div>
       </div>
     </div>
