@@ -1,23 +1,6 @@
 from flask import g, request
 from flask_jwt_extended import get_jwt_identity
-
-from app import (
-    app,
-    db,
-    User,
-    Membership,
-    WorkspaceInvitation,
-    Activity,
-    error,
-    ok,
-    require_role,
-    clean_string,
-    EMAIL_RE,
-    now_utc,
-    record_activity,
-    notify,
-    current_workspace_context,
-)
+from app import app, db, User, WorkspaceInvitation, error, ok, require_role, clean_string, EMAIL_RE, now_utc, record_activity, notify
 from datetime import timedelta
 import os
 import uuid
@@ -29,16 +12,12 @@ def create_invitation_link():
     data = request.get_json(silent=True) or {}
     email = clean_string(data.get("email"), 255).lower()
     role = clean_string(data.get("role") or "Member", 40)
-
     if not EMAIL_RE.match(email) or role not in {"Admin", "Manager", "Member", "Viewer"}:
         return error("A valid email and role are required.", 400, "VALIDATION_ERROR")
 
     invitation = WorkspaceInvitation.query.filter_by(
-        workspace_id=g.workspace.id,
-        email=email,
-        accepted_at=None,
+        workspace_id=g.workspace.id, email=email, accepted_at=None
     ).order_by(WorkspaceInvitation.created_at.desc()).first()
-
     if invitation and invitation.expires_at > now_utc():
         invitation.role = role
     else:
@@ -54,13 +33,7 @@ def create_invitation_link():
 
     existing_user = User.query.filter(User.email.ilike(email)).first()
     if existing_user:
-        notify(
-            existing_user.id,
-            "Workspace invitation",
-            f"You have been invited to {g.workspace.name} as {role}.",
-            "invite",
-        )
-
+        notify(existing_user.id, "Workspace invitation", f"You have been invited to {g.workspace.name} as {role}.", "invite")
     record_activity(int(get_jwt_identity()), "Invited a workspace member", email)
     db.session.commit()
 
@@ -74,22 +47,3 @@ def create_invitation_link():
         },
         "invitationLink": f"{base}/invite/{invitation.token}",
     }, 201)
-
-
-@app.delete("/api/activity/<int:activity_id>")
-@require_role("Admin")
-def delete_activity_extra(activity_id):
-    user_id = int(get_jwt_identity())
-    membership, workspace = current_workspace_context(user_id)
-    if not membership or not workspace:
-        return error("Workspace not found.", 404, "WORKSPACE_NOT_FOUND")
-
-    activity = db.session.get(Activity, activity_id)
-    if not activity or not Membership.query.filter_by(
-        workspace_id=workspace.id, user_id=activity.user_id
-    ).first():
-        return error("Activity not found.", 404, "ACTIVITY_NOT_FOUND")
-
-    db.session.delete(activity)
-    db.session.commit()
-    return ok({"message": "Activity deleted."})
