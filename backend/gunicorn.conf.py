@@ -1,5 +1,5 @@
 def post_worker_init(worker):
-    # Render starts gunicorn with app:app. Load all extension routes against
-    # the same Flask application instance.
-    import app_extra  # noqa: F401
-    import workspace_context_extra  # noqa: F401
+    # Load the runtime API extensions after app:app is initialized.
+    # Do not import the legacy app_extra module: it registers duplicate Flask
+    # routes and makes gunicorn workers fail to boot.
+    import runtime_extensions  # noqa: F401
