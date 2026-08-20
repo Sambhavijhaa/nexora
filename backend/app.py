@@ -118,3 +118,52 @@ def root(): return ok({"message":"Nexora API is running","health":"/api/health",
 def health():
  try: db.session.execute(db.text("SELECT 1")); return ok({"message":"Nexora API is running","database":"connected","environment":APP_ENV})
  except Exception: db.session.rollback(); return error("Database unavailable.",503,"DATABASE_UNAVAILABLE")
+
+# Authentication routes live in the main Render entrypoint so they work even when
+# Render starts the service with the default `gunicorn app:app` command.
+@app.post("/api/auth/register")
+def register():
+ data=request.get_json(silent=True) or {}; name=clean_string(data.get("name"),100); email=clean_string(data.get("email"),255).lower(); password=str(data.get("password") or "")
+ if not name or not EMAIL_RE.match(email): return error("Name and a valid email are required.",400,"VALIDATION_ERROR")
+ password_error=validate_password(password)
+ if password_error: return error(password_error,400,"VALIDATION_ERROR")
+ if User.query.filter(func.lower(User.email)==email).first(): return error("An account with this email already exists.",409,"EMAIL_EXISTS")
+ try:
+  user=User(name=name,email=email,password_hash=generate_password_hash(password),role="Admin"); db.session.add(user); db.session.flush(); workspace=Workspace(name=f"{name}'s Workspace",slug=slugify(f"{name}-workspace"),owner_id=user.id); db.session.add(workspace); db.session.flush(); db.session.add(Membership(workspace_id=workspace.id,user_id=user.id,role="Admin")); db.session.commit(); return ok(token_response(user),201)
+ except Exception: db.session.rollback(); logger.exception("Registration failed",extra={"request_id":getattr(g,"request_id","-")}); return error("Could not create account. Please try again.",500,"REGISTER_FAILED")
+
+@app.post("/api/auth/login")
+def login():
+ data=request.get_json(silent=True) or {}; email=clean_string(data.get("email"),255).lower(); password=str(data.get("password") or ""); user=User.query.filter(func.lower(User.email)==email).first()
+ if not user or not check_password_hash(user.password_hash,password): return error("Invalid email or password.",401,"INVALID_CREDENTIALS")
+ return ok(token_response(user))
+
+@app.post("/api/auth/refresh")
+@jwt_required(refresh=True)
+def refresh():
+ user=db.session.get(User,int(get_jwt_identity()))
+ if not user: return error("User account not found.",401,"AUTH_INVALID")
+ return ok({"accessToken":create_access_token(identity=str(user.id))})
+
+@app.post("/api/team/invite-link")
+@require_role("Admin","Manager")
+def create_invitation_link():
+ data=request.get_json(silent=True) or {}; email=clean_string(data.get("email"),255).lower(); role=clean_string(data.get("role") or "Member",40)
+ if not EMAIL_RE.match(email) or role not in ROLES: return error("A valid email and role are required.",400,"VALIDATION_ERROR")
+ invitation=WorkspaceInvitation.query.filter_by(workspace_id=g.workspace.id,email=email,accepted_at=None).order_by(WorkspaceInvitation.created_at.desc()).first()
+ if invitation and invitation.expires_at>now_utc(): invitation.role=role
+ else:
+  invitation=WorkspaceInvitation(workspace_id=g.workspace.id,email=email,role=role,token=uuid.uuid4().hex+uuid.uuid4().hex,expires_at=now_utc()+timedelta(days=7)); db.session.add(invitation); db.session.flush()
+ existing=User.query.filter(func.lower(User.email)==email).first()
+ if existing: notify(existing.id,"Workspace invitation",f"You have been invited to {g.workspace.name} as {role}.","invite")
+ record_activity(int(get_jwt_identity()),"Invited a workspace member",email); db.session.commit(); base=os.getenv("FRONTEND_URL","https://nexora-ops.vercel.app").rstrip("/")
+ return ok({"invitation":{"id":invitation.id,"email":invitation.email,"role":invitation.role,"expiresAt":invitation.expires_at.isoformat()},"invitationLink":f"{base}/invite/{invitation.token}"},201)
+
+@app.delete("/api/activity/<int:activity_id>")
+@require_role("Admin")
+def delete_activity(activity_id):
+ membership,workspace=current_workspace_context()
+ if not membership or not workspace: return error("Workspace not found.",404,"WORKSPACE_NOT_FOUND")
+ activity=db.session.get(Activity,activity_id)
+ if not activity or not Membership.query.filter_by(workspace_id=workspace.id,user_id=activity.user_id).first(): return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")
+ db.session.delete(activity); db.session.commit(); return ok({"message":"Activity deleted."})
