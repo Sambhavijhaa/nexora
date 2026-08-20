@@ -1,41 +1,15 @@
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import api from "../api";
 
-type NotificationItem = { id: number; title: string; message: string; kind: string; read: boolean; createdAt?: string | null };
-
-export default function Notifications() {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function load() {
-    try {
-      const { data } = await api.get("/notifications");
-      setItems(data.notifications || []);
-    } finally { setLoading(false); }
-  }
-
-  useEffect(() => { void load(); }, []);
-
-  async function markRead(id: number) {
-    await api.patch(`/notifications/${id}/read`);
-    setItems((current) => current.map((item) => item.id === id ? { ...item, read: true } : item));
-  }
-
-  return (
-    <div className="simple-page">
-      <div className="page-heading-row">
-        <div><p className="eyebrow">Inbox</p><h1>Notifications</h1><p>Important updates from your workspace.</p></div>
-      </div>
-      <div className="simple-list">
-        {loading ? <div className="empty-state">Loading notifications…</div> : items.length === 0 ? <div className="empty-state"><Bell size={22} /><span>You're all caught up.</span></div> : items.map((item) => (
-          <button key={item.id} className={`simple-list-item ${item.read ? "read" : "unread"}`} onClick={() => !item.read && void markRead(item.id)}>
-            <span className="simple-icon"><Bell size={17} /></span>
-            <span className="simple-list-copy"><strong>{item.title}</strong><span>{item.message}</span></span>
-            {!item.read && <span className="status-dot" aria-label="Unread" />}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+type NotificationItem = { id:number; title:string; message:string; kind:string; read:boolean; createdAt?:string|null };
+function formatDate(value?:string|null){if(!value)return "";const d=new Date(value);return Number.isNaN(d.getTime())?"":d.toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}
+export default function Notifications(){
+  const [items,setItems]=useState<NotificationItem[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState("");
+  async function load(){try{const {data}=await api.get("/notifications");setItems(data.notifications||[]);}catch(err:any){setError(err.response?.data?.message||"Could not load notifications.");}finally{setLoading(false);}}
+  useEffect(()=>{void load();},[]);
+  async function markRead(id:number){try{await api.patch(`/notifications/${id}/read`);setItems(c=>c.map(i=>i.id===id?{...i,read:true}:i));}catch(err:any){setError(err.response?.data?.message||"Could not update notification.");}}
+  async function markAllRead(){try{await api.post("/notifications/read-all");setItems(c=>c.map(i=>({...i,read:true})));}catch(err:any){setError(err.response?.data?.message||"Could not mark notifications as read.");}}
+  const unread=items.filter(i=>!i.read).length;
+  return <div className="workspace-page"><div className="page-heading"><div><p className="eyebrow">Personal inbox</p><h2>Notifications</h2><p>Only updates that matter to you appear here. Workspace history stays in Activity.</p></div>{unread>0&&<button className="secondary-button" onClick={markAllRead}><CheckCheck size={15}/> Mark all read</button>}</div>{error&&<div className="form-error page-alert">{error}</div>}<div className="panel notification-panel">{loading?<div className="empty-state">Loading notifications…</div>:!items.length?<div className="empty-state"><Bell size={22}/><span>You're all caught up.</span></div>:items.map(item=><button key={item.id} className={`notification-item ${item.read?"read":"unread"}`} onClick={()=>!item.read&&void markRead(item.id)}><span className="notification-icon"><Bell size={17}/></span><span className="notification-copy"><strong>{item.title}</strong><span>{item.message}</span><small>{formatDate(item.createdAt)}</small></span>{!item.read&&<span className="status-dot" aria-label="Unread"/>}</button>)}</div><style>{`.notification-panel{padding:0;overflow:hidden}.notification-item{width:100%;display:flex;align-items:flex-start;gap:12px;padding:16px;border:0;border-bottom:1px solid #edf0f3;background:#fff;color:#252936;text-align:left;cursor:pointer}.notification-item:last-child{border-bottom:0}.notification-item.unread{background:#fafaff}.notification-icon{display:flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border-radius:9px;background:#eeecff;color:#5548c9}.notification-copy{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}.notification-copy strong{font-size:14px}.notification-copy span{font-size:13px;color:#626975;line-height:1.45}.notification-copy small{font-size:11px;color:#8a9099}.notification-item .status-dot{margin-top:9px;flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:#5548c9}@media(max-width:600px){.page-heading .secondary-button{width:100%;justify-content:center}}`}</style></div>;
 }
