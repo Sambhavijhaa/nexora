@@ -1,7 +1,7 @@
 from flask import g, request
 from flask_jwt_extended import get_jwt_identity, create_access_token, jwt_required
-from app import app, db, User, Workspace, Membership, WorkspaceInvitation, Project, ProjectWorkspace, ProjectMember, Task, error, ok, require_role, clean_string, EMAIL_RE, now_utc, record_activity, notify, token_response, validate_password, slugify, project_payload, task_payload, TASK_STATUSES, TASK_PRIORITIES
-from datetime import timedelta
+from app import app, db, User, Workspace, Membership, WorkspaceInvitation, Project, ProjectWorkspace, ProjectMember, Task, TaskMeta, error, ok, require_role, clean_string, EMAIL_RE, now_utc, record_activity, notify, token_response, validate_password, slugify, project_payload, task_payload, TASK_STATUSES, TASK_PRIORITIES
+from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
 import uuid
@@ -46,15 +46,32 @@ def create_project_extra():
 @app.post('/api/tasks')
 @require_role('Admin','Manager')
 def create_task_extra():
-    data=request.get_json(silent=True) or {};title=clean_string(data.get('title') or data.get('name'),200);description=clean_string(data.get('description'),4000);project_id=data.get('projectId') or data.get('project_id');assignee_id=data.get('assigneeId') or data.get('assignee_id');status=clean_string(data.get('status') or 'Todo',40);priority=clean_string(data.get('priority') or 'Medium',40);due_date=clean_string(data.get('dueDate') or data.get('due_date'),30) or None
+    data=request.get_json(silent=True) or {}
+    title=clean_string(data.get('title') or data.get('name'),180)
+    description=clean_string(data.get('description'),4000)
+    project_id=data.get('projectId') or data.get('project_id')
+    assignee_id=data.get('assigneeId') or data.get('assignee_id')
+    status=clean_string(data.get('status') or 'Todo',40)
+    priority=clean_string(data.get('priority') or 'Medium',30)
+    due_date_raw=clean_string(data.get('dueDate') or data.get('due_date'),40) or None
     if not title or not project_id:return error('Task name and project are required.',400,'VALIDATION_ERROR')
     if status not in TASK_STATUSES:return error('Invalid task status.',400,'VALIDATION_ERROR')
     if priority not in TASK_PRIORITIES:return error('Invalid task priority.',400,'VALIDATION_ERROR')
-    project=Project.query.join(ProjectWorkspace,ProjectWorkspace.project_id==Project.id).filter(Project.id==int(project_id),ProjectWorkspace.workspace_id==g.workspace.id).first()
+    try: project_id=int(project_id)
+    except (TypeError,ValueError):return error('Invalid project.',400,'VALIDATION_ERROR')
+    project=Project.query.join(ProjectWorkspace,ProjectWorkspace.project_id==Project.id).filter(Project.id==project_id,ProjectWorkspace.workspace_id==g.workspace.id).first()
     if not project:return error('Project not found in this workspace.',404,'PROJECT_NOT_FOUND')
-    if assignee_id and not Membership.query.filter_by(workspace_id=g.workspace.id,user_id=int(assignee_id)).first():return error('Assignee must be a member of this workspace.',400,'INVALID_ASSIGNEE')
-    task=Task(title=title,description=description,project_id=int(project_id),assignee_id=int(assignee_id) if assignee_id else None,status=status,priority=priority,due_date=due_date,creator_id=int(get_jwt_identity()));db.session.add(task);db.session.flush();record_activity(int(get_jwt_identity()),'Created task',title)
-    if assignee_id and int(assignee_id)!=int(get_jwt_identity()):notify(int(assignee_id),'Task assigned',f'You were assigned {title}.','task')
+    if assignee_id:
+        try: assignee_id=int(assignee_id)
+        except (TypeError,ValueError):return error('Invalid assignee.',400,'VALIDATION_ERROR')
+        if not Membership.query.filter_by(workspace_id=g.workspace.id,user_id=assignee_id).first():return error('Assignee must be a member of this workspace.',400,'INVALID_ASSIGNEE')
+    due_date=None
+    if due_date_raw:
+        try: due_date=datetime.fromisoformat(due_date_raw.replace('Z','+00:00')).replace(tzinfo=None)
+        except ValueError:return error('Invalid due date.',400,'VALIDATION_ERROR')
+    task=Task(title=title,description=description,project_id=project_id,assignee_id=assignee_id,status=status,priority=priority)
+    db.session.add(task);db.session.flush();db.session.add(TaskMeta(task_id=task.id,due_date=due_date));record_activity(int(get_jwt_identity()),'Created task',title)
+    if assignee_id and assignee_id!=int(get_jwt_identity()):notify(assignee_id,'Task assigned',f'You were assigned {title}.','task')
     db.session.commit();return ok({'task':task_payload(task)},201)
 
 @app.post('/api/team/invite-link')
