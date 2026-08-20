@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import api from "../api";
 
 const navigation=[{name:"Dashboard",path:"/dashboard"},{name:"Projects",path:"/projects"},{name:"Tasks",path:"/tasks"},{name:"Team",path:"/team"},{name:"Analytics",path:"/analytics"},{name:"Activity",path:"/activity"}];
-type User={id?:number;name?:string;role?:string};
+type User={id?:number;name?:string;email?:string;role?:string};
 type Workspace={id:number;name:string;role:string;selected?:boolean};
 function readUser():User{try{return JSON.parse(localStorage.getItem("nexora_user")||"{}")}catch{return{}}}
 function initials(n:string){return(n||"N").trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase()}
+function syncUserRole(role:string){try{const current=readUser();localStorage.setItem("nexora_user",JSON.stringify({...current,role}));}catch{}}
 
 export default function DashboardLayout(){
  const navigate=useNavigate();
@@ -26,6 +27,7 @@ export default function DashboardLayout(){
    if(selected){
     localStorage.setItem("nexora_workspace_id",String(selected.id));
     localStorage.setItem("nexora_workspace_role",selected.role);
+    syncUserRole(selected.role);
    }
   }catch{}
  }
@@ -36,6 +38,7 @@ export default function DashboardLayout(){
    await api.post(`/workspaces/${w.id}/select`);
    localStorage.setItem("nexora_workspace_id",String(w.id));
    localStorage.setItem("nexora_workspace_role",w.role);
+   syncUserRole(w.role);
    setWorkspace(w);
    setOpen(false);
    setMobile(false);
