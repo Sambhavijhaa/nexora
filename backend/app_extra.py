@@ -1,6 +1,6 @@
 from flask import g, request
-from flask_jwt_extended import get_jwt_identity, create_access_token, create_refresh_token, jwt_required
-from app import app, db, User, Workspace, Membership, WorkspaceInvitation, error, ok, require_role, clean_string, EMAIL_RE, now_utc, record_activity, notify, token_response, validate_password, slugify
+from flask_jwt_extended import get_jwt_identity, create_access_token, jwt_required
+from app import app, db, User, Workspace, Membership, WorkspaceInvitation, Project, ProjectWorkspace, ProjectMember, error, ok, require_role, clean_string, EMAIL_RE, now_utc, record_activity, notify, token_response, validate_password, slugify, project_payload
 from datetime import timedelta
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
@@ -37,7 +37,6 @@ def register_extra():
         return error(password_error, 400, "VALIDATION_ERROR")
     if User.query.filter(User.email.ilike(email)).first():
         return error("An account with this email already exists.", 409, "EMAIL_EXISTS")
-
     user = User(name=name, email=email, password_hash=generate_password_hash(password), role="Admin")
     db.session.add(user)
     db.session.flush()
@@ -69,6 +68,29 @@ def refresh_extra():
     return ok({"accessToken": create_access_token(identity=str(user.id))})
 
 
+@app.post("/api/projects")
+@require_role("Admin", "Manager")
+def create_project_extra():
+    data = request.get_json(silent=True) or {}
+    name = clean_string(data.get("name"), 160)
+    description = clean_string(data.get("description"), 2000)
+    status = clean_string(data.get("status") or "Active", 40)
+    if not name:
+        return error("Project name is required.", 400, "VALIDATION_ERROR")
+    if status not in {"Active", "On Hold", "Completed", "Archived"}:
+        return error("Invalid project status.", 400, "VALIDATION_ERROR")
+
+    project = Project(name=name, description=description, status=status, owner_id=int(get_jwt_identity()))
+    db.session.add(project)
+    db.session.flush()
+    db.session.add(ProjectWorkspace(project_id=project.id, workspace_id=g.workspace.id))
+    # The creator is automatically a project member.
+    db.session.add(ProjectMember(project_id=project.id, user_id=int(get_jwt_identity())))
+    record_activity(int(get_jwt_identity()), "Created project", name)
+    db.session.commit()
+    return ok({"project": project_payload(project, g.workspace.id)}, 201)
+
+
 @app.post("/api/team/invite-link")
 @require_role("Admin", "Manager")
 def create_invitation_link():
@@ -77,7 +99,6 @@ def create_invitation_link():
     role = clean_string(data.get("role") or "Member", 40)
     if not EMAIL_RE.match(email) or role not in {"Admin", "Manager", "Member", "Viewer"}:
         return error("A valid email and role are required.", 400, "VALIDATION_ERROR")
-
     invitation = WorkspaceInvitation.query.filter_by(workspace_id=g.workspace.id, email=email, accepted_at=None).order_by(WorkspaceInvitation.created_at.desc()).first()
     if invitation and invitation.expires_at > now_utc():
         invitation.role = role
