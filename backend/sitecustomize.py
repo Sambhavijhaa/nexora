@@ -23,6 +23,14 @@ def _register_routes(module):
         require_role = module.require_role
         import os
 
+        # When an invited user accepts after creating an account, prefer the
+        # most recently joined workspace. This makes the invitation workspace
+        # the workspace they land in instead of their newly-created personal one.
+        def latest_workspace_for_user(user_id):
+            membership = Membership.query.filter_by(user_id=user_id).order_by(Membership.created_at.desc()).first()
+            return module.Workspace.query.get(membership.workspace_id) if membership else None
+        module.workspace_for_user = latest_workspace_for_user
+
         if not any(str(rule) == "/api/activity/<int:activity_id>" for rule in app.url_map.iter_rules()):
             @app.delete("/api/activity/<int:activity_id>")
             @require_role("Admin")
