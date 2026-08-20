@@ -1,12 +1,11 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-// Explicit production API URL. This prevents a stale Vercel environment
-// variable from sending login requests to an old backend.
+// Use the production Render API directly. This avoids stale Vercel environment
+// variables causing authentication requests to go to an old backend.
 const API_BASE_URL = "https://nexora-backend-7i97.onrender.com/api";
 const API_TIMEOUT = 60000;
 
 type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
-
 const api = axios.create({ baseURL: API_BASE_URL, timeout: API_TIMEOUT, headers: { "Content-Type": "application/json" } });
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("nexora_access_token") || localStorage.getItem("nexora_token");
