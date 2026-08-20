@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, CheckCircle2, Circle, Clock3 } from "lucide-react";
 import api from "../api";
 
@@ -8,9 +8,8 @@ export default function Analytics() {
   const [data, setData] = useState<Data | null>(null);
   useEffect(() => { api.get("/dashboard/summary").then(({ data: result }) => setData(result)); }, []);
 
-  const total = Math.max(data?.stats.tasks || 0, 1);
-  const completion = data ? Math.round((data.stats.completed / total) * 100) : 0;
-  const bars = useMemo(() => data ? [22, 35, 31, 48, 41, Math.max(40, completion), Math.max(45, completion)] : [18,28,24,40,35,48,44], [data, completion]);
+  const total = data?.stats.tasks || 0;
+  const completion = total ? Math.round((data!.stats.completed / total) * 100) : 0;
   const items = data ? [
     { label: "Completed", value: data.taskBreakdown.done, icon: CheckCircle2 },
     { label: "In progress", value: data.taskBreakdown.inProgress, icon: Clock3 },
@@ -30,23 +29,18 @@ export default function Analytics() {
 
       <div className="analytics-grid">
         <div className="panel">
-          <div className="panel-header"><div><p className="eyebrow">Delivery</p><h3>Task completion trend</h3></div><span className="text-button">Last 7 days</span></div>
-          <div className="chart-bars">{bars.map((height, index) => <div className="bar" key={index} style={{ height: `${height}%` }} />)}</div>
-          <div className="chart-labels">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day => <span key={day}>{day}</span>)}</div>
-        </div>
-
-        <div className="panel">
           <div className="panel-header"><div><p className="eyebrow">Distribution</p><h3>Tasks by status</h3></div></div>
           <div className="distribution">
             {items.map(({ label, value, icon: Icon }) => <div className="distribution-row" key={label}><Icon size={14}/><span>{label}</span><strong>{value}</strong></div>)}
             {!data && <div className="empty-state">Loading analytics...</div>}
           </div>
         </div>
-      </div>
 
-      <div className="panel analytics-panel">
-        <div className="panel-header"><div><p className="eyebrow">Team health</p><h3>Workspace delivery snapshot</h3></div></div>
-        {items.map(({ label, value }) => <div className="metric-row" key={label}><div className="metric-label"><strong>{label}</strong><span>{value}</span></div><div className="metric-track"><div style={{ width: `${Math.min(100, value / total * 100)}%` }}/></div></div>)}
+        <div className="panel analytics-panel">
+          <div className="panel-header"><div><p className="eyebrow">Team health</p><h3>Workspace delivery snapshot</h3></div></div>
+          {items.map(({ label, value }) => <div className="metric-row" key={label}><div className="metric-label"><strong>{label}</strong><span>{value}</span></div><div className="metric-track"><div style={{ width: `${total ? Math.min(100, value / total * 100) : 0}%` }}/></div></div>)}
+          {!data && <div className="empty-state">Loading analytics...</div>}
+        </div>
       </div>
     </div>
   );
