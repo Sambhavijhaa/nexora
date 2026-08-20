@@ -6,6 +6,11 @@ import os
 import uuid
 
 
+@app.get("/api/health")
+def health_check_extra():
+    return ok({"status": "healthy", "service": "nexora-api"})
+
+
 @app.post("/api/team/invite-link")
 @require_role("Admin", "Manager")
 def create_invitation_link():
