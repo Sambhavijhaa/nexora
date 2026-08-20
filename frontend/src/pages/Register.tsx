@@ -3,44 +3,5 @@ import type { FormEvent } from "react";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
-
-function getApiError(error: unknown, fallback: string) {
-  const err = error as { response?: { data?: { message?: string } } };
-  if (err.response?.data?.message) return err.response.data.message;
-  if (!err.response) return "We couldn't reach Nexora right now. Please check your connection and try again.";
-  return fallback;
-}
-
-export default function Register() {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  function update(field: keyof typeof form, value: string) { setForm((current) => ({ ...current, [field]: value })); }
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault(); setError(""); setLoading(true);
-    try {
-      const { data } = await api.post("/auth/register", form);
-      if (!data.accessToken || !data.refreshToken || !data.user) throw new Error("The server returned an incomplete registration response.");
-      localStorage.setItem("nexora_access_token", data.accessToken); localStorage.setItem("nexora_refresh_token", data.refreshToken); localStorage.setItem("nexora_token", data.accessToken); localStorage.setItem("nexora_user", JSON.stringify(data.user));
-      navigate("/dashboard", { replace: true });
-    } catch (err) { setError(getApiError(err, "Unable to create your account. Please try again.")); }
-    finally { setLoading(false); }
-  }
-
-  return <main className="auth-page"><section className="auth-card" aria-labelledby="register-title">
-    <div className="auth-brand"><strong>Nexora</strong></div>
-    <p className="eyebrow">Get started</p>
-    <h1 id="register-title">Create your Nexora workspace</h1>
-    <p className="auth-subtitle">Create your account, start your shared workspace, then invite your team and organize projects and tasks in one place.</p>
-    <form onSubmit={handleSubmit} className="auth-form">
-      <label>Full name<div className="input-wrap"><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Your name" autoComplete="name" required maxLength={100} /></div></label>
-      <label>Work email<div className="input-wrap"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" autoComplete="email" required /></div></label>
-      <label>Password<div className="input-wrap password-wrap"><LockKeyhole className="password-lock-icon" size={16} aria-hidden="true" /><input type="password" value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required /></div></label>
-      {error && <div className="form-error" role="alert">{error}</div>}
-      <button className="primary-button auth-submit" disabled={loading} type="submit">{loading ? "Creating account..." : <>Create account <ArrowRight size={16} /></>}</button>
-    </form>
-    <p className="auth-footer">Already have a Nexora workspace? <Link to="/login">Sign in</Link></p>
-  </section></main>;
-}
+function getApiError(error: unknown, fallback: string) { const err = error as { response?: { data?: { message?: string } } }; if (err.response?.data?.message) return err.response.data.message; if (!err.response) return "We couldn't reach Nexora right now. Please check your connection and try again."; return fallback; }
+export default function Register() { const navigate=useNavigate(); const [form,setForm]=useState({name:"",email:"",password:""}); const [error,setError]=useState(""); const [loading,setLoading]=useState(false); function update(field:keyof typeof form,value:string){setForm(current=>({...current,[field]:value}));} async function handleSubmit(event:FormEvent){event.preventDefault();setError("");setLoading(true);try{const{data}=await api.post("/auth/register",form);if(!data.accessToken||!data.refreshToken||!data.user)throw new Error("The server returned an incomplete registration response.");localStorage.setItem("nexora_access_token",data.accessToken);localStorage.setItem("nexora_refresh_token",data.refreshToken);localStorage.setItem("nexora_token",data.accessToken);localStorage.setItem("nexora_user",JSON.stringify(data.user));const inviteToken=localStorage.getItem("nexora_invitation_token");if(inviteToken){try{await api.post("/team/accept",{token:inviteToken});localStorage.removeItem("nexora_invitation_token");}catch(inviteError:any){setError(inviteError.response?.data?.message||"Account created, but the invitation could not be accepted.");}}navigate("/dashboard",{replace:true});}catch(err){setError(getApiError(err,"Unable to create your account. Please try again."));}finally{setLoading(false);}} return <main className="auth-page"><section className="auth-card" aria-labelledby="register-title"><div className="auth-brand"><strong>Nexora</strong></div><p className="eyebrow">Get started</p><h1 id="register-title">Create your Nexora workspace</h1><p className="auth-subtitle">Create your account, start your shared workspace, then invite your team and organize projects and tasks in one place.</p><form onSubmit={handleSubmit} className="auth-form"><label>Full name<div className="input-wrap"><input value={form.name} onChange={e=>update("name",e.target.value)} placeholder="Your name" autoComplete="name" required maxLength={100}/></div></label><label>Work email<div className="input-wrap"><input type="email" value={form.email} onChange={e=>update("email",e.target.value)} placeholder="you@company.com" autoComplete="email" required/></div></label><label>Password<div className="input-wrap password-wrap"><LockKeyhole className="password-lock-icon" size={16}/><input type="password" value={form.password} onChange={e=>update("password",e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required/></div></label>{error&&<div className="form-error" role="alert">{error}</div>}<button className="primary-button auth-submit" disabled={loading} type="submit">{loading?"Creating account...":<>Create account <ArrowRight size={16}/></>}</button></form><p className="auth-footer">Already have a Nexora workspace? <Link to="/login">Sign in</Link></p></section></main>; }
