@@ -1,0 +1,3 @@
+import { useEffect, useState } from "react";
+import api from "../api";
+export default function WorkspaceSwitch(){const[w,setW]=useState<any[]>([]);const[id,setId]=useState(localStorage.getItem("nexora_workspace_id")||"");useEffect(()=>{api.get("/workspaces").then(r=>{setW(r.data.workspaces||[]);const x=r.data.workspaces?.find((x:any)=>x.selected)||r.data.workspaces?.[0];if(x&&!id){setId(String(x.id));localStorage.setItem("nexora_workspace_id",String(x.id));}}).catch(()=>{});},[]);if(w.length<2)return null;return <select value={id} onChange={async e=>{const v=e.target.value;await api.post(`/workspaces/${v}/select`);localStorage.setItem("nexora_workspace_id",v);location.reload();}}>{w.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>}
