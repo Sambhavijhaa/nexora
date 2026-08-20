@@ -11,6 +11,7 @@ def _register_routes(module):
         return
     try:
         app = module.app
+        from flask import g
         from flask_jwt_extended import get_jwt_identity
         Activity = module.Activity
         Membership = module.Membership
@@ -20,7 +21,6 @@ def _register_routes(module):
         error = module.error
         ok = module.ok
         require_role = module.require_role
-        from flask import request
         import os
 
         if not any(str(rule) == "/api/activity/<int:activity_id>" for rule in app.url_map.iter_rules()):
