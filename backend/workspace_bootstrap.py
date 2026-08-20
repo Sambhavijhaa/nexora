@@ -1,8 +1,7 @@
 from app import app
 
-# Render's declarative start command may load workspace_bootstrap:app instead
-# of app:app. Import the same stable runtime extensions in that case.
-import runtime_extensions  # noqa: F401
+# Render's declarative start command uses this module so the stable
+# workspace runtime is loaded after the Flask application is initialized.
+import runtime_v2  # noqa: F401
 
-# Re-export the already initialized Flask application.
 app = app
