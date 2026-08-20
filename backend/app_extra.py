@@ -6,6 +6,18 @@ import os
 import uuid
 
 
+@app.after_request
+def ensure_frontend_cors(response):
+    origin = request.headers.get("Origin")
+    allowed = {"https://nexora-ops.vercel.app", "https://nexora.vercel.app"}
+    if origin in allowed:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Request-ID"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Vary"] = "Origin"
+    return response
+
+
 @app.get("/api/health")
 def health_check_extra():
     return ok({"status": "healthy", "service": "nexora-api"})
