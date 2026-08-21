@@ -253,7 +253,13 @@ def tasks():
     if m.role not in {"Admin","Manager"}:
         assigned_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==int(get_jwt_identity()))
         ids=ids.filter(ProjectWorkspace.project_id.in_(assigned_ids))
-    ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})
+    if m.role in {"Admin","Manager"}:
+        # Admins and managers see every task in the selected workspace.
+        ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all()
+    else:
+        # Members see only tasks assigned to themselves.
+        ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all()
+    return ok({"tasks":[task_payload(t) for t in ts]})
 @app.post("/api/tasks")
 @require_role("Admin","Manager")
 def create_task():
