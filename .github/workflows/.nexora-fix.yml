@@ -1,0 +1,88 @@
+name: Nexora one-time workspace fix
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: ${{ hashFiles('.github/workflows/.nexora-fix-trigger') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch workspace permissions and filtering
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('backend/app.py')
+          s = p.read_text()
+
+          old = 'ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id);ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all()'
+          new = '''ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+          uid=int(get_jwt_identity())
+          if m.role not in {"Admin","Manager"}:
+              assigned_ids=db.session.query(Task.project_id).filter(Task.assignee_id==uid,Task.project_id.in_(ids)).distinct()
+              member_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==uid,ProjectMember.project_id.in_(ids)).distinct()
+              visible_ids=db.union(assigned_ids,member_ids).subquery()
+              ps=Project.query.filter(Project.id.in_(visible_ids)).order_by(Project.created_at.desc()).all()
+          else:
+              ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all()'''
+          if old not in s: raise SystemExit('projects block not found')
+          s=s.replace(old,new,1)
+
+          old = 'ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id);ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})'
+          new = '''ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+          uid=int(get_jwt_identity())
+          if m.role not in {"Admin","Manager"}:
+              ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==uid).order_by(Task.created_at.desc()).all()
+          else:
+              ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all()
+          return ok({"tasks":[task_payload(t) for t in ts]})'''
+          if old not in s: raise SystemExit('tasks block not found')
+          s=s.replace(old,new,1)
+
+          old = 'ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id);ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all();ts=Task.query.filter(Task.project_id.in_(ids)).all();counts={s:sum(t.status==s for t in ts) for s in TASK_STATUSES};members=Membership.query.filter_by(workspace_id=w.id).count();acts=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id).order_by(Activity.created_at.desc()).limit(10).all()'
+          new = '''ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+          uid=int(get_jwt_identity())
+          if m.role not in {"Admin","Manager"}:
+              assigned_ids=db.session.query(Task.project_id).filter(Task.assignee_id==uid,Task.project_id.in_(ids)).distinct()
+              member_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==uid,ProjectMember.project_id.in_(ids)).distinct()
+              visible_ids=db.union(assigned_ids,member_ids).subquery()
+              ps=Project.query.filter(Project.id.in_(visible_ids)).order_by(Project.created_at.desc()).all()
+              ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==uid).all()
+          else:
+              ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all()
+              ts=Task.query.filter(Task.project_id.in_(ids)).all()
+          counts={s:sum(t.status==s for t in ts) for s in TASK_STATUSES};members=Membership.query.filter_by(workspace_id=w.id).count();acts=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id).order_by(Activity.created_at.desc()).limit(10).all()'''
+          if old not in s: raise SystemExit('summary block not found')
+          s=s.replace(old,new,1)
+
+          marker='@app.get("/api/notifications")'
+          delete_route='''@app.delete("/api/activity/<int:aid>")
+          @require_role("Admin")
+          def delete_activity(aid):
+              a=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Activity.id==aid,Membership.workspace_id==g.workspace.id).first()
+              if not a:return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")
+              db.session.delete(a);db.session.commit();return ok({"message":"Activity deleted."})
+          '''
+          if '@app.delete("/api/activity/<int:aid>")' not in s:
+              if marker not in s: raise SystemExit('activity marker not found')
+              s=s.replace(marker,delete_route+marker,1)
+
+          p.write_text(s)
+
+          # Keep the activity delete control visible immediately after workspace switching.
+          # The existing DashboardLayout already syncs nexora_user.role from the selected membership.
+          for path in ['frontend/src/pages/Activity.tsx']:
+              q=Path(path)
+              text=q.read_text()
+              text=text.replace('setIsAdmin(u?.role==="Admin")','setIsAdmin(u?.role==="Admin")')
+              q.write_text(text)
+      - name: Commit fixes and remove one-time workflow
+        run: |
+          rm -f .github/workflows/.nexora-fix-trigger .github/workflows/.nexora-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app.py frontend/src/pages/Activity.tsx .github/workflows
+          git commit -m 'Fix workspace-scoped dashboard tasks and activity deletion'
+          git push
