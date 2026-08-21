@@ -1,7 +1,9 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-const API_BASE_URL = "https://nexora-backend-7i97.onrender.com/api";
-const API_TIMEOUT = 15000;
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_BASE_URL = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
+// Render can cold-start after inactivity. Give the first request enough time to wake it.
+const API_TIMEOUT = 60000;
 type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
 
 const api = axios.create({
