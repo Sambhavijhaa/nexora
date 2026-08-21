@@ -1,0 +1,40 @@
+name: Fix admin task visibility
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-task-visibility:
+    if: github.actor == 'Sambhavijhaa'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch admin task query
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app.py')
+          s = p.read_text(encoding='utf-8')
+          old = '''    ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})'''
+          new = '''    if m.role in {"Admin","Manager"}:\n        # Admins and managers see every task in the selected workspace.\n        ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all()\n    else:\n        # Members see only tasks assigned to themselves.\n        ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all()\n    return ok({"tasks":[task_payload(t) for t in ts]})'''
+          if old not in s:
+              print('Already patched or source differs; no change needed.')
+              raise SystemExit(0)
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit backend fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/app.py
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Fix admin task visibility in workspace"
+          git push
