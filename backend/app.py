@@ -27,9 +27,16 @@ LOG_LEVEL=os.getenv("LOG_LEVEL","INFO").upper(); logging.basicConfig(level=getat
 db=SQLAlchemy(); jwt=JWTManager(); app=Flask(__name__)
 app.config.update(SECRET_KEY=SECRET_KEY or "dev-only-secret",JWT_SECRET_KEY=JWT_SECRET_KEY or "dev-only-jwt-secret",JWT_ACCESS_TOKEN_EXPIRES=timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES","30"))),JWT_REFRESH_TOKEN_EXPIRES=timedelta(days=int(os.getenv("JWT_REFRESH_DAYS","30"))),SQLALCHEMY_DATABASE_URI=DATABASE_URL,SQLALCHEMY_TRACK_MODIFICATIONS=False,SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping":True},MAX_CONTENT_LENGTH=1024*1024)
 db.init_app(app); jwt.init_app(app)
+# Authentication is JWT-header based, not cookie based. Allow the production
+# Vercel deployment plus Vercel preview deployments so login is not blocked by
+# a stale/alternate Vercel hostname.
 configured_origins=[x.strip() for x in os.getenv("CORS_ORIGINS","").split(",") if x.strip()]
-if IS_PRODUCTION and not configured_origins: configured_origins=["https://nexora-ops.vercel.app"]
-CORS(app,resources={r"/api/*":{"origins":configured_origins or "*"}},allow_headers=["Content-Type","Authorization","X-Request-ID"],methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"])
+if IS_PRODUCTION:
+    configured_origins = configured_origins or ["https://nexora-ops.vercel.app"]
+    cors_origins = re.compile(r"^https://([a-z0-9-]+\.)?vercel\.app$|^https://nexora-ops\.vercel\.app$", re.I)
+else:
+    cors_origins = configured_origins or "*"
+CORS(app,resources={r"/api/*":{"origins":cors_origins}},allow_headers=["Content-Type","Authorization","X-Workspace-ID","X-Request-ID"],methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"])
 limiter=Limiter(key_func=get_remote_address,app=app,default_limits=["300 per minute"],storage_uri=os.getenv("RATELIMIT_STORAGE_URI","memory://"),headers_enabled=True)
 EMAIL_RE=re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$"); ROLES={"Admin","Manager","Member","Viewer"}; PROJECT_STATUSES={"Active","On Hold","Completed","Archived"}; TASK_STATUSES={"Todo","In Progress","Review","Done","Blocked"}; TASK_PRIORITIES={"Low","Medium","High","Critical"}
 
@@ -62,12 +69,12 @@ class WorkspaceInvitation(db.Model):
 
 def now_utc(): return datetime.now(timezone.utc).replace(tzinfo=None)
 def error(message,status=400,code=None,details=None):
- payload={"success":False,"message":message};
+ payload={"success":False,"message":message}
  if code: payload["errorCode"]=code
  if details: payload["details"]=details
  payload["requestId"]=getattr(g,"request_id",None); return jsonify(payload),status
 def ok(payload=None,status=200):
- body={"success":True};
+ body={"success":True}
  if payload: body.update(payload)
  return jsonify(body),status
 def clean_string(value,max_len=500): return str(value or "").strip()[:max_len]
@@ -100,7 +107,7 @@ def ensure_user_workspace(user):
  membership=Membership.query.filter_by(user_id=user.id).first()
  if membership:return Workspace.query.get(membership.workspace_id)
  workspace=Workspace(name=f"{user.name}'s Workspace",slug=slugify(f"{user.name}-workspace"),owner_id=user.id); db.session.add(workspace); db.session.flush(); db.session.add(Membership(workspace_id=workspace.id,user_id=user.id,role="Admin")); return workspace
-def record_activity(user_id,action,context=""): db.session.add(Activity(user_id=user_id,action=action,context=context))
+def record_activity(user_id,action,context=""): db.session.add(Activity(user_id=user_id,action=action,context=context)
 def notify(user_id,title,message,kind="info"):
  if user_id:db.session.add(Notification(user_id=user_id,title=title,message=message,kind=kind))
 def refresh_project_progress(project_id):
@@ -121,10 +128,14 @@ def validate_password(password):
 def token_response(user):
  access=create_access_token(identity=str(user.id)); refresh=create_refresh_token(identity=str(user.id)); return {"accessToken":access,"refreshToken":refresh,"user":user_payload(user)}
 
+@app.get("/")
+def service_root():
+ return ok({"service":"Nexora API","status":"online","health":"/api/health"})
+
 @app.get("/api/health")
 def health():
  try:db.session.execute(db.text("SELECT 1"));return ok({"message":"Nexora API is running","database":"connected","environment":APP_ENV})
- except Exception:db.session.rollback();return error("Database unavailable.",503,"DATABASE_UNAVAILABLE")
+ except Exception as exc:db.session.rollback();logger.exception("Health check failed");return error("Database unavailable.",503,"DATABASE_UNAVAILABLE")
 @app.post("/api/auth/register")
 @limiter.limit("8 per minute")
 def register():
@@ -137,9 +148,13 @@ def register():
 @app.post("/api/auth/login")
 @limiter.limit("10 per minute")
 def login():
- data=request.get_json(silent=True) or {};email=clean_string(data.get("email"),255).lower();password=str(data.get("password") or "");user=User.query.filter(func.lower(User.email)==email).first()
- if not user or not check_password_hash(user.password_hash,password):return error("Invalid email or password.",401,"INVALID_CREDENTIALS")
- ensure_user_workspace(user);db.session.commit();response=token_response(user);workspace=workspace_for_user(user.id);response["workspace"]={"id":workspace.id,"name":workspace.name,"slug":workspace.slug,"role":membership_for(user.id).role};return ok(response)
+ data=request.get_json(silent=True) or {};email=clean_string(data.get("email"),255).lower();password=str(data.get("password") or "")
+ try:
+  user=User.query.filter(func.lower(User.email)==email).first()
+  if not user or not check_password_hash(user.password_hash,password):return error("Invalid email or password.",401,"INVALID_CREDENTIALS")
+  ensure_user_workspace(user);db.session.commit();response=token_response(user);workspace=workspace_for_user(user.id);response["workspace"]={"id":workspace.id,"name":workspace.name,"slug":workspace.slug,"role":membership_for(user.id).role};return ok(response)
+ except Exception as exc:
+  db.session.rollback(); logger.exception("Login failed for email=%s", email); return error("Login failed on the server.",500,"LOGIN_FAILED")
 @app.get("/api/auth/me")
 @jwt_required()
 def me():
@@ -175,7 +190,7 @@ def accept_invitation():
  user_id=int(get_jwt_identity());user=db.session.get(User,user_id)
  if user.email.lower()!=invitation.email.lower():return error("This invitation was sent to a different email address.",403,"INVITATION_EMAIL_MISMATCH")
  if not Membership.query.filter_by(workspace_id=invitation.workspace_id,user_id=user_id).first():db.session.add(Membership(workspace_id=invitation.workspace_id,user_id=user_id,role=invitation.role))
- invitation.accepted_at=now_utc();record_activity(user_id,"Joined the workspace",str(invitation.workspace_id));db.session.commit();return ok({"message":"Invitation accepted."})
+ invitation.accepted_at=now_utc();record_activity(user_id,"Joined the workspace",str(invitation.workspace_id));db.session.commit();return ok({"message":"Invitation accepted.","workspace":{"id":invitation.workspace_id,"role":invitation.role}})
 @app.post("/api/team/invite-link")
 @require_role("Admin","Manager")
 def invite_link():
@@ -233,6 +248,6 @@ def after_request(response):response.headers["X-Request-ID"]=g.request_id;return
 @app.errorhandler(404)
 def not_found(_):return error("Route not found.",404,"NOT_FOUND")
 @app.errorhandler(500)
-def internal(_):db.session.rollback();return error("Internal server error.",500,"INTERNAL_ERROR")
+def internal(_):db.session.rollback();logger.exception("Unhandled request exception");return error("Internal server error.",500,"INTERNAL_ERROR")
 with app.app_context():db.create_all()
 if __name__=="__main__":app.run(host="0.0.0.0",port=int(os.getenv("PORT","5000")),debug=APP_ENV!="production")
