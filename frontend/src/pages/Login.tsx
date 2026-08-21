@@ -4,9 +4,15 @@ import { ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
+function clearAuthStorage() {
+  ["nexora_access_token", "nexora_refresh_token", "nexora_token", "nexora_user", "nexora_workspace_id", "nexora_workspace_role"].forEach((key) => localStorage.removeItem(key));
+}
+
 function getApiError(error: unknown) {
-  const err = error as { code?: string; response?: { data?: { message?: string } } };
-  if (err.response?.data?.message) return err.response.data.message;
+  const err = error as { code?: string; response?: { data?: { message?: string; errorCode?: string }; status?: number } };
+  const message = err.response?.data?.message;
+  if (message) return message;
+  if (err.response?.status === 401) return "Your login session is invalid or expired. Please sign in again.";
   if (err.code === "ECONNABORTED") return "Nexora is taking too long to respond. Please try again.";
   return "We couldn't reach Nexora right now. Please check your connection and try again.";
 }
@@ -22,19 +28,16 @@ export default function Login() {
     event.preventDefault();
     setError("");
     setLoading(true);
+    // Never let an expired token from an earlier mobile/browser session affect a fresh login.
+    clearAuthStorage();
     try {
-      const { data } = await api.post("/auth/login", { email, password });
-      if (!data.accessToken || !data.refreshToken || !data.user) {
-        throw new Error("The server returned an incomplete login response.");
-      }
-
+      const { data } = await api.post("/auth/login", { email: email.trim(), password });
+      if (!data.accessToken || !data.refreshToken || !data.user) throw new Error("The server returned an incomplete login response.");
       localStorage.setItem("nexora_access_token", data.accessToken);
       localStorage.setItem("nexora_refresh_token", data.refreshToken);
       localStorage.setItem("nexora_token", data.accessToken);
       localStorage.setItem("nexora_user", JSON.stringify(data.user));
 
-      // If the user arrived through an invitation, accept it and immediately
-      // make that workspace the active workspace.
       const inviteToken = localStorage.getItem("nexora_invitation_token");
       if (inviteToken) {
         try {
@@ -53,9 +56,9 @@ export default function Login() {
         localStorage.setItem("nexora_workspace_id", String(data.workspace.id));
         localStorage.setItem("nexora_workspace_role", data.workspace.role || "Member");
       }
-
       navigate("/dashboard", { replace: true });
     } catch (err) {
+      clearAuthStorage();
       setError(getApiError(err));
     } finally {
       setLoading(false);
