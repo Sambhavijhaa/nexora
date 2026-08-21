@@ -11,11 +11,9 @@ class RequestIdFilter(logging.Filter):
 
 
 def post_worker_init(worker):
-    # stable_entrypoint initializes app_extra and installs the workspace-aware
-    # handlers in the correct order. Do NOT import runtime_v2 directly here:
-    # runtime_v2 expects app.membership_for to already exist and otherwise
-    # crashes the Gunicorn worker during boot.
-    import stable_entrypoint  # noqa: F401
+    # Import the real Flask application directly. The stable_entrypoint layer
+    # depended on helpers that are no longer part of app.py and caused workers
+    # to crash before serving any request.
     from app import app
 
     # Keep request_id logging safe for Gunicorn/Flask records that are emitted
