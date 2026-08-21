@@ -1,8 +1,13 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
+// Vercel may define VITE_API_URL as either the Render origin or the full /api
+// URL. Normalize both forms so authentication never accidentally calls
+// https://...onrender.com/auth/login instead of /api/auth/login.
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
-const API_BASE_URL = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
-// Render can cold-start after inactivity. Give the first request enough time to wake it.
+const configuredBase = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
+const API_BASE_URL = /\/api$/i.test(configuredBase) ? configuredBase : `${configuredBase}/api`;
+
+// Render can cold-start after inactivity. Give the first request enough time to wake.
 const API_TIMEOUT = 60000;
 type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
 
