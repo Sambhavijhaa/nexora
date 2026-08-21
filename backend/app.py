@@ -107,7 +107,7 @@ def ensure_user_workspace(user):
  membership=Membership.query.filter_by(user_id=user.id).first()
  if membership:return Workspace.query.get(membership.workspace_id)
  workspace=Workspace(name=f"{user.name}'s Workspace",slug=slugify(f"{user.name}-workspace"),owner_id=user.id); db.session.add(workspace); db.session.flush(); db.session.add(Membership(workspace_id=workspace.id,user_id=user.id,role="Admin")); return workspace
-def record_activity(user_id,action,context=""): db.session.add(Activity(user_id=user_id,action=action,context=context)
+def record_activity(user_id,action,context=""): db.session.add(Activity(user_id=user_id,action=action,context=context))
 def notify(user_id,title,message,kind="info"):
  if user_id:db.session.add(Notification(user_id=user_id,title=title,message=message,kind=kind))
 def refresh_project_progress(project_id):
