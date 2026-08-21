@@ -1,14 +1,17 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-// Vercel may define VITE_API_URL as either the Render origin or the full /api
-// URL. Normalize both forms so authentication never accidentally calls
-// https://...onrender.com/auth/login instead of /api/auth/login.
+// Keep production login tied to the live Render API. A stale Vercel
+// VITE_API_URL must never send authentication to the wrong host/path.
+const DEFAULT_API_URL = "https://nexora-backend-7i97.onrender.com/api";
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
-const configuredBase = (configuredApiUrl || "https://nexora-backend-7i97.onrender.com/api").replace(/\/$/, "");
-const API_BASE_URL = /\/api$/i.test(configuredBase) ? configuredBase : `${configuredBase}/api`;
+const normalizedConfigured = (configuredApiUrl || DEFAULT_API_URL).replace(/\/$/, "");
+const API_BASE_URL = /nexora-backend-7i97\.onrender\.com(\/api)?$/i.test(normalizedConfigured)
+  ? (/\/api$/i.test(normalizedConfigured) ? normalizedConfigured : `${normalizedConfigured}/api`)
+  : DEFAULT_API_URL;
 
-// Render can cold-start after inactivity. Give the first request enough time to wake.
-const API_TIMEOUT = 60000;
+// Render can cold-start after inactivity. Thirty seconds is enough for a
+// normal wake-up while preventing the login screen from appearing frozen.
+const API_TIMEOUT = 30000;
 type RetryableConfig = AxiosRequestConfig & { _retry?: boolean };
 
 const api = axios.create({
@@ -33,8 +36,10 @@ api.interceptors.response.use((response) => response, async (error) => {
   if (error.response?.status !== 401 || !original || original._retry || original.url?.includes("/auth/")) {
     return Promise.reject(error);
   }
+
   const refreshToken = localStorage.getItem("nexora_refresh_token");
   if (!refreshToken) return Promise.reject(error);
+
   if (refreshing) {
     return new Promise((resolve) => queued.push((token) => {
       original.headers = original.headers ?? {};
@@ -42,6 +47,7 @@ api.interceptors.response.use((response) => response, async (error) => {
       resolve(api(original));
     }));
   }
+
   original._retry = true;
   refreshing = true;
   try {
