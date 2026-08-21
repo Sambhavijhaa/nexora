@@ -4,15 +4,17 @@ import { ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 
+const AUTH_KEYS = ["nexora_access_token", "nexora_refresh_token", "nexora_token", "nexora_user", "nexora_workspace_id", "nexora_workspace_role"];
+
 function clearAuthStorage() {
-  ["nexora_access_token", "nexora_refresh_token", "nexora_token", "nexora_user", "nexora_workspace_id", "nexora_workspace_role"].forEach((key) => localStorage.removeItem(key));
+  AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
 }
 
 function getApiError(error: unknown) {
-  const err = error as { code?: string; response?: { data?: { message?: string; errorCode?: string }; status?: number } };
+  const err = error as { code?: string; response?: { data?: { message?: string }; status?: number } };
   const message = err.response?.data?.message;
   if (message) return message;
-  if (err.response?.status === 401) return "Your login session is invalid or expired. Please sign in again.";
+  if (err.response?.status === 401) return "Invalid email or password. Please try again.";
   if (err.code === "ECONNABORTED") return "Nexora is taking too long to respond. Please try again.";
   return "We couldn't reach Nexora right now. Please check your connection and try again.";
 }
@@ -28,16 +30,20 @@ export default function Login() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    // Never let an expired token from an earlier mobile/browser session affect a fresh login.
+
+    // A fresh login must never inherit an expired access/refresh token or workspace context.
     clearAuthStorage();
+
     try {
       const { data } = await api.post("/auth/login", { email: email.trim(), password });
       if (!data.accessToken || !data.refreshToken || !data.user) throw new Error("The server returned an incomplete login response.");
+
       localStorage.setItem("nexora_access_token", data.accessToken);
       localStorage.setItem("nexora_refresh_token", data.refreshToken);
       localStorage.setItem("nexora_token", data.accessToken);
       localStorage.setItem("nexora_user", JSON.stringify(data.user));
 
+      // A stale invitation token must never prevent normal login.
       const inviteToken = localStorage.getItem("nexora_invitation_token");
       if (inviteToken) {
         try {
@@ -47,18 +53,22 @@ export default function Login() {
             localStorage.setItem("nexora_workspace_id", String(invitedWorkspace.id));
             localStorage.setItem("nexora_workspace_role", invitedWorkspace.role || "Member");
           }
+        } catch {
+          // Expired/already-used invitation: discard it and continue with ordinary login.
+        } finally {
           localStorage.removeItem("nexora_invitation_token");
-        } catch (inviteError: any) {
-          setError(inviteError.response?.data?.message || "Signed in, but the invitation could not be accepted.");
-          return;
         }
-      } else if (data.workspace?.id) {
+      }
+
+      if (!localStorage.getItem("nexora_workspace_id") && data.workspace?.id) {
         localStorage.setItem("nexora_workspace_id", String(data.workspace.id));
         localStorage.setItem("nexora_workspace_role", data.workspace.role || "Member");
       }
+
       navigate("/dashboard", { replace: true });
     } catch (err) {
       clearAuthStorage();
+      localStorage.removeItem("nexora_invitation_token");
       setError(getApiError(err));
     } finally {
       setLoading(false);
