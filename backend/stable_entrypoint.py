@@ -5,7 +5,7 @@ from app import app
 import app as app_module
 import app_extra
 
-# Use the stable workspace-aware runtime instead of runtime_v2.
+# Use the stable workspace-aware runtime instead of importing runtime_v2 during boot.
 app_module.membership_for = lambda user_id, workspace_id=None: (
     app_extra.workspace_user(user_id, workspace_id)
     if workspace_id is not None
@@ -24,7 +24,7 @@ for endpoint, handler in {
 @app.post("/api/team/accept-stable")
 @jwt_required()
 def accept_invitation_stable():
-    token = app_extra.clean_string((request.get_json(silent=True) or {}).get("token"), 128)
+    token = app_extra.clean((request.get_json(silent=True) or {}).get("token"), 128)
     invitation = app_extra.WorkspaceInvitation.query.filter_by(token=token).first()
     if not invitation or invitation.accepted_at or invitation.expires_at < app_extra.now_utc():
         return app_extra.error("This invitation is invalid or expired.", 400, "INVITATION_INVALID")
