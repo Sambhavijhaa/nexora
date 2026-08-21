@@ -97,7 +97,8 @@ def all_user_workspaces(user_id):
     return db.session.query(Workspace,Membership).join(Membership,Membership.workspace_id==Workspace.id).filter(Membership.user_id==user_id).order_by(Membership.created_at.asc()).all()
 def current_context(user_id):
     user=db.session.get(User,user_id); ensure_user_workspace(user)
-    raw=request.headers.get("X-Workspace-ID") or request.args.get("workspaceId") or request.get_json(silent=True).get("workspaceId") if request.is_json else None
+    body=request.get_json(silent=True) if request.is_json else {}
+    raw=request.headers.get("X-Workspace-ID") or request.args.get("workspaceId") or (body or {}).get("workspaceId")
     workspace_id=None
     try: workspace_id=int(raw) if raw else None
     except (TypeError,ValueError): workspace_id=None
@@ -225,6 +226,9 @@ def projects():
     if not m:return error("Workspace not found.",404,"WORKSPACE_NOT_FOUND")
     migrate_legacy_links()
     ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+    if m.role not in {"Admin","Manager"}:
+        assigned_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==int(get_jwt_identity()))
+        ids=ids.filter(ProjectWorkspace.project_id.in_(assigned_ids))
     ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all()
     return ok({"projects":[project_payload(p) for p in ps]})
 @app.post("/api/projects")
@@ -245,7 +249,11 @@ def delete_project(pid):
 def tasks():
     m,w=current_context(int(get_jwt_identity()));
     if not m:return error("Workspace not found.",404,"WORKSPACE_NOT_FOUND")
-    migrate_legacy_links();ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id);ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})
+    migrate_legacy_links();ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+    if m.role not in {"Admin","Manager"}:
+        assigned_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==int(get_jwt_identity()))
+        ids=ids.filter(ProjectWorkspace.project_id.in_(assigned_ids))
+    ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})
 @app.post("/api/tasks")
 @require_role("Admin","Manager")
 def create_task():
@@ -293,7 +301,14 @@ def delete_task(tid):
 def summary():
     m,w=current_context(int(get_jwt_identity()));
     if not m:return error("Workspace not found.",404,"WORKSPACE_NOT_FOUND")
-    migrate_legacy_links();ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id);ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all();ts=Task.query.filter(Task.project_id.in_(ids)).all();counts={s:sum(t.status==s for t in ts) for s in TASK_STATUSES};members=Membership.query.filter_by(workspace_id=w.id).count();acts=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id).order_by(Activity.created_at.desc()).limit(10).all()
+    migrate_legacy_links();ids=db.session.query(ProjectWorkspace.project_id).filter(ProjectWorkspace.workspace_id==w.id)
+    if m.role not in {"Admin","Manager"}:
+        assigned_ids=db.session.query(ProjectMember.project_id).filter(ProjectMember.user_id==int(get_jwt_identity()))
+        ids=ids.filter(ProjectWorkspace.project_id.in_(assigned_ids))
+        ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).all()
+    else:
+        ts=Task.query.filter(Task.project_id.in_(ids)).all()
+    ps=Project.query.filter(Project.id.in_(ids)).order_by(Project.created_at.desc()).all();counts={s:sum(t.status==s for t in ts) for s in TASK_STATUSES};members=Membership.query.filter_by(workspace_id=w.id).count();acts=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id).order_by(Activity.created_at.desc()).limit(10).all()
     return ok({"stats":{"projects":len(ps),"tasks":len(ts),"completed":counts["Done"],"teamMembers":members},"taskBreakdown":{"done":counts["Done"],"inProgress":counts["In Progress"],"todo":counts["Todo"],"review":counts["Review"],"blocked":counts["Blocked"]},"projects":[project_payload(p) for p in ps[:6]],"activity":[{"id":a.id,"action":a.action,"context":a.context or ""} for a in acts]})
 @app.get("/api/analytics")
 @jwt_required()
@@ -308,6 +323,17 @@ def activity():
     m,w=current_context(int(get_jwt_identity()));
     if not m:return error("Workspace not found.",404,"WORKSPACE_NOT_FOUND")
     rows=Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id).order_by(Activity.created_at.desc()).limit(100).all();return ok({"activity":[{"id":a.id,"action":a.action,"context":a.context or "","user":user_payload(a.user) if a.user else None,"createdAt":a.created_at.isoformat() if a.created_at else None} for a in rows]})
+@app.delete("/api/activity/<int:aid>")
+@require_role("Admin")
+def delete_activity(aid):
+    m,w=current_context(int(get_jwt_identity()))
+    a=Activity.query.get(aid)
+    if not m or not a:
+        return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")
+    if not Membership.query.filter_by(workspace_id=w.id,user_id=a.user_id).first():
+        return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")
+    db.session.delete(a);db.session.commit();return ok({"message":"Activity deleted."})
+
 @app.get("/api/notifications")
 @jwt_required()
 def notifications():
