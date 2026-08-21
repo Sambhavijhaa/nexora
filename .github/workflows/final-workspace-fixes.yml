@@ -1,0 +1,56 @@
+name: Final workspace fixes
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !startsWith(github.event.head_commit.message, 'Automated: final workspace fixes') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch backend workspace scoping
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('backend/app.py')
+          s = p.read_text(encoding='utf-8')
+
+          old_tasks = '    ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all();return ok({"tasks":[task_payload(t) for t in ts]})'
+          new_tasks = '''    if m.role in {"Admin","Manager"}:\n        ts=Task.query.filter(Task.project_id.in_(ids)).order_by(Task.created_at.desc()).all()\n    else:\n        ts=Task.query.filter(Task.project_id.in_(ids),Task.assignee_id==int(get_jwt_identity())).order_by(Task.created_at.desc()).all()\n    return ok({"tasks":[task_payload(t) for t in ts]})'''
+          if old_tasks in s:
+              s = s.replace(old_tasks, new_tasks, 1)
+
+          old_activity = 'class Activity(db.Model):\n    id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False,index=True); action=db.Column(db.String(180),nullable=False); context=db.Column(db.String(180),default=""); created_at=db.Column(db.DateTime,server_default=db.func.now(),index=True); user=db.relationship("User",foreign_keys=[user_id])'
+          new_activity = 'class Activity(db.Model):\n    id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False,index=True); workspace_id=db.Column(db.Integer,db.ForeignKey("workspaces.id",ondelete="CASCADE"),nullable=True,index=True); action=db.Column(db.String(180),nullable=False); context=db.Column(db.String(180),default=""); created_at=db.Column(db.DateTime,server_default=db.func.now(),index=True); user=db.relationship("User",foreign_keys=[user_id])'
+          if old_activity in s:
+              s = s.replace(old_activity, new_activity, 1)
+
+          old_query = 'Activity.query.join(Membership,Membership.user_id==Activity.user_id).filter(Membership.workspace_id==w.id)'
+          s = s.replace(old_query, 'Activity.query.filter(Activity.workspace_id==w.id)')
+
+          old_delete = 'if not Membership.query.filter_by(workspace_id=w.id,user_id=a.user_id).first():\n        return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")'
+          s = s.replace(old_delete, 'if a.workspace_id != w.id:\n        return error("Activity not found.",404,"ACTIVITY_NOT_FOUND")', 1)
+
+          marker = 'with app.app_context():\n    db.create_all()\n'
+          if marker in s and 'final workspace activity migration' not in s:
+              migration = '''with app.app_context():\n    db.create_all()\n    try:\n        from sqlalchemy import inspect\n        inspector = inspect(db.engine)\n        activity_columns = {c["name"] for c in inspector.get_columns("activity")}\n        if "workspace_id" not in activity_columns:\n            if db.engine.dialect.name == "postgresql":\n                db.session.execute(db.text("ALTER TABLE activity ADD COLUMN workspace_id INTEGER"))\n            else:\n                db.session.execute(db.text("ALTER TABLE activity ADD COLUMN workspace_id INTEGER"))\n            db.session.commit()\n        db.session.execute(db.text("""\n            UPDATE activity\n            SET workspace_id = (\n                SELECT wm.workspace_id FROM workspace_memberships wm\n                WHERE wm.user_id = activity.user_id\n                ORDER BY wm.created_at ASC, wm.id ASC LIMIT 1\n            )\n            WHERE workspace_id IS NULL\n        """))\n        db.session.commit()\n    except Exception:\n        db.session.rollback()\n        logger.exception("final workspace activity migration skipped")\n'''
+              s = s.replace(marker, migration, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit backend patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/app.py
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Automated: final workspace fixes"
+          git push
