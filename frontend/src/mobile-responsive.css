@@ -1,4 +1,4 @@
-/* Nexora responsive layout: keep the same navigation and information hierarchy on phones. */
+/* Nexora mobile/tablet responsive layer */
 
 @media (max-width: 1100px) {
   .page-content { padding: 24px 22px 40px; }
@@ -11,166 +11,207 @@
 
 @media (max-width: 700px) {
   html, body, #root { width: 100%; min-width: 0; overflow-x: hidden; }
+  body { -webkit-text-size-adjust: 100%; }
 
-  .app-shell {
-    width: 100%;
-    min-width: 0;
-    display: flex;
-  }
+  .app-shell { display:block; width:100%; min-height:100svh; }
+  .main-content { width:100%; min-width:0; padding-bottom:92px; }
 
-  /* Keep text navigation visible on mobile, as requested. */
+  /* Compact bottom navigation: all core pages remain one tap away. */
   .sidebar {
-    width: 158px;
-    min-width: 158px;
-    flex-basis: 158px;
-    padding: 16px 9px;
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    top:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:118px !important;
+    z-index:1000 !important;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom)) !important;
+    border-right:0 !important;
+    border-top:1px solid var(--border) !important;
+    background:rgba(15,18,24,.98) !important;
+    backdrop-filter:blur(18px);
+    overflow:visible !important;
+    display:block !important;
   }
 
   .sidebar .brand,
-  .sidebar .logo,
-  .sidebar nav,
-  .sidebar a,
-  .sidebar button {
-    max-width: 100%;
+  .sidebar-user,
+  .nav-label { display:none !important; }
+
+  .workspace-switcher {
+    position:absolute !important;
+    left:8px !important;
+    right:8px !important;
+    bottom:calc(100% + 8px) !important;
+    margin:0 !important;
   }
 
-  .sidebar a,
-  .sidebar button {
-    font-size: 13px;
-    padding: 9px 8px;
-    gap: 7px;
-    white-space: nowrap;
+  .workspace-trigger {
+    min-height:40px;
+    padding:9px 11px;
+    background:#151922 !important;
+    border-color:#2b313c !important;
+    color:#f1f3f8 !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
   }
 
-  .main-content {
-    min-width: 0;
-    width: calc(100% - 158px);
-    flex: 1;
+  .workspace-trigger strong { font-size:12px; }
+  .workspace-menu {
+    top:auto !important;
+    bottom:calc(100% + 6px) !important;
+    left:0 !important;
+    right:0 !important;
+    max-height:45vh !important;
+    background:#151922 !important;
+    border-color:#2b313c !important;
   }
+  .workspace-option { color:#e9edf5 !important; }
+  .workspace-option:hover,.workspace-option.current { background:#242038 !important; color:#b8a5ff !important; }
+  .workspace-option span { color:#8d96a8 !important; }
+
+  .sidebar-nav {
+    display:grid !important;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:3px !important;
+    width:100%;
+    overflow:hidden;
+  }
+
+  .sidebar-nav .nav-item {
+    min-width:0 !important;
+    width:100% !important;
+    height:48px !important;
+    padding:6px 2px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    border-radius:8px !important;
+    color:#7f899b !important;
+    font-size:9px !important;
+    font-weight:700 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .sidebar-nav .nav-item.active {
+    color:#fff !important;
+    background:rgba(124,92,255,.16) !important;
+    box-shadow:inset 0 2px 0 var(--accent) !important;
+  }
+
+  .sidebar-nav .nav-item:nth-last-child(-n+3) { display:none !important; }
 
   .topbar {
-    height: 58px;
-    padding: 0 12px;
+    height:58px !important;
+    padding:0 12px !important;
+    position:sticky !important;
+    top:0 !important;
+    z-index:20 !important;
   }
+  .topbar-actions { gap:6px !important; }
+  .topbar-search { display:none !important; }
 
   .page-content {
-    padding: 18px 12px 32px;
+    width:100%;
+    max-width:100%;
+    padding:18px 12px 30px !important;
+  }
+
+  .welcome-section,
+  .page-heading {
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:14px !important;
+    margin-bottom:18px !important;
   }
 
   .welcome-section h2,
-  .page-heading h2 {
-    font-size: 22px;
-    line-height: 1.2;
-  }
+  .page-heading h2,
+  .placeholder-page h2 { font-size:21px !important; line-height:1.2; }
+  .welcome-section>div>p:last-child,
+  .page-heading>div>p:last-child { font-size:11px !important; }
 
-  .welcome-section p,
-  .page-heading p {
-    font-size: 13px;
-  }
+  .welcome-section .primary-button,
+  .page-heading .primary-button { width:100%; }
 
   .stats-grid,
   .card-grid,
-  .member-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .dashboard-grid,
+  .member-grid,
+  .settings-grid,
   .analytics-grid,
-  .settings-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .dashboard-grid {
+    grid-template-columns:1fr !important;
+    gap:10px !important;
   }
 
-  .panel {
-    width: 100%;
-    overflow: hidden;
-  }
+  .stat-card { padding:14px !important; }
+  .stat-card h3 { font-size:23px !important; }
+  .panel { width:100%; min-width:0; padding:14px !important; overflow:hidden; }
+  .panel-header { margin-bottom:13px !important; gap:10px; }
+  .panel-header h3,.panel h3 { font-size:13px; }
 
-  .panel-header {
-    padding: 14px;
-  }
-
-  .activity {
-    gap: 8px;
-    padding: 12px;
-  }
-
-  .activity strong,
-  .activity span {
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
+  .project-row { gap:10px; align-items:flex-start; }
+  .project-row>div { min-width:0; }
+  .project-row strong { overflow-wrap:anywhere; }
 
   .task-columns {
-    display: flex;
-    gap: 9px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    scrollbar-width: thin;
+    display:flex !important;
+    width:100%;
+    gap:9px !important;
+    overflow-x:auto !important;
+    padding:0 0 7px !important;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
   }
-
   .task-column {
-    min-width: 150px;
-    flex: 0 0 150px;
+    min-width:min(82vw,280px) !important;
+    flex:0 0 min(82vw,280px) !important;
+    scroll-snap-align:start;
   }
 
-  .table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .table-wrap { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { min-width:560px; }
+
+  .form-row { flex-direction:column !important; align-items:stretch !important; }
+  .workspace-input { width:100% !important; min-width:0 !important; }
+  .form-row .primary-button { width:100%; }
+
+  .activity { gap:9px; padding:11px 0; }
+  .activity>div:last-child { min-width:0; }
+  .activity strong,.activity span { font-size:10px; overflow-wrap:anywhere; }
+
+  .project-card { min-height:0 !important; }
+  .project-card>p { min-height:0 !important; margin-bottom:15px; }
+  .member-card { min-width:0; }
+  .role-badge { flex-shrink:0; }
+
+  .chart-bars { height:170px; gap:6px; padding-left:3px; padding-right:3px; }
+  .chart-labels { gap:5px; }
+
+  .auth-page { min-height:100svh; padding:16px !important; align-items:center; }
+  .auth-card { width:100% !important; max-width:450px; padding:26px 20px !important; border-radius:15px; }
+  .auth-form input,.auth-form button,.auth-form select { min-height:44px; }
+
+  .modal,.dialog,.form-card {
+    width:calc(100vw - 24px) !important;
+    max-width:calc(100vw - 24px) !important;
+    max-height:calc(100svh - 32px);
+    overflow:auto;
   }
 
-  table {
-    min-width: 560px;
-  }
-
-  .modal,
-  .dialog,
-  .form-card {
-    width: min(94vw, 520px);
-    max-width: 94vw;
-  }
-
-  input,
-  select,
-  textarea,
-  button {
-    max-width: 100%;
-  }
+  input,select,textarea,button { max-width:100%; }
 }
 
-@media (max-width: 430px) {
-  .sidebar {
-    width: 142px;
-    min-width: 142px;
-    flex-basis: 142px;
-  }
-
-  .main-content {
-    width: calc(100% - 142px);
-  }
-
-  .sidebar a,
-  .sidebar button {
-    font-size: 12px;
-    padding: 8px 6px;
-  }
-
-  .topbar {
-    padding: 0 9px;
-  }
-
-  .page-content {
-    padding: 15px 9px 28px;
-  }
-
-  .welcome-section h2,
-  .page-heading h2 {
-    font-size: 20px;
-  }
-
-  .stat-card {
-    padding: 12px;
-  }
+@media (max-width:390px) {
+  .page-content { padding-left:9px !important; padding-right:9px !important; }
+  .sidebar-nav .nav-item { font-size:8px !important; }
+  .sidebar-nav { gap:1px !important; }
+  .topbar { padding:0 9px !important; }
+  .task-column { min-width:84vw !important; flex-basis:84vw !important; }
 }
