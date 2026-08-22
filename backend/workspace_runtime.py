@@ -82,7 +82,7 @@ def workspace_activity():
 def delete_workspace_activity(aid):
     user_id = int(get_jwt_identity())
     membership, workspace = selected_workspace(user_id)
-    if not membership or membership.role != "Admin":
+    if not membership or not workspace or membership.role != "Admin":
         return app_module.error("You do not have permission to delete activity.", 403, "FORBIDDEN")
     activity = db.session.query(Activity).filter(
         Activity.id == aid,
@@ -137,7 +137,13 @@ def record_after(endpoint_name, action, context_getter):
     app.view_functions[endpoint_name] = wrapped
 
 
-ensure_activity_workspace_column()
+# IMPORTANT: this module is imported from Gunicorn's post_worker_init hook.
+# Flask-SQLAlchemy requires an active application context for db.engine and
+# model queries. Do the one-time schema compatibility migration only after
+# entering the real Flask application context.
+with app.app_context():
+    ensure_activity_workspace_column()
+
 app.view_functions["activity"] = workspace_activity
 app.view_functions["delete_activity"] = delete_workspace_activity
 
