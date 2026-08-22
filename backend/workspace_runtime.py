@@ -25,75 +25,41 @@ def selected_workspace(user_id):
         workspace_id = None
 
     if workspace_id:
-        membership = Membership.query.filter_by(
-            user_id=user_id, workspace_id=workspace_id
-        ).first()
+        membership = Membership.query.filter_by(user_id=user_id, workspace_id=workspace_id).first()
         if membership:
             return membership, db.session.get(Workspace, workspace_id)
 
-    membership = Membership.query.filter_by(user_id=user_id).order_by(
-        Membership.created_at.asc()
-    ).first()
-    return (
-        (membership, db.session.get(Workspace, membership.workspace_id))
-        if membership
-        else (None, None)
-    )
+    membership = Membership.query.filter_by(user_id=user_id).order_by(Membership.created_at.asc()).first()
+    return ((membership, db.session.get(Workspace, membership.workspace_id)) if membership else (None, None))
 
 
 def ensure_activity_workspace_column():
-    """Add the workspace column without resetting or deleting existing data."""
+    """Add workspace tracking without resetting or deleting existing data."""
     engine = db.engine
     dialect = engine.dialect.name
     with engine.begin() as conn:
         if dialect == "postgresql":
-            conn.execute(text(
-                "ALTER TABLE activity ADD COLUMN IF NOT EXISTS workspace_id INTEGER"
-            ))
-            conn.execute(text(
-                "CREATE INDEX IF NOT EXISTS ix_activity_workspace_id "
-                "ON activity (workspace_id)"
-            ))
+            conn.execute(text("ALTER TABLE activity ADD COLUMN IF NOT EXISTS workspace_id INTEGER"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_activity_workspace_id ON activity (workspace_id)"))
         elif dialect == "sqlite":
             columns = conn.execute(text("PRAGMA table_info(activity)")).fetchall()
             if not any(row[1] == "workspace_id" for row in columns):
                 conn.execute(text("ALTER TABLE activity ADD COLUMN workspace_id INTEGER"))
-            conn.execute(text(
-                "CREATE INDEX IF NOT EXISTS ix_activity_workspace_id "
-                "ON activity (workspace_id)"
-            ))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_activity_workspace_id ON activity (workspace_id)"))
         else:
             try:
-                conn.execute(text(
-                    "ALTER TABLE activity ADD COLUMN workspace_id INTEGER"
-                ))
+                conn.execute(text("ALTER TABLE activity ADD COLUMN workspace_id INTEGER"))
             except Exception:
                 pass
 
-        # Existing activity predates workspace tracking. Put it in the user's
-        # original workspace rather than showing the same entry in every workspace.
+        # Old activity rows predate workspace tracking. Assign each row to the
+        # user's original workspace so one event is never shown in every workspace.
         conn.execute(text(
             "UPDATE activity SET workspace_id = "
-            "(SELECT MIN(workspace_memberships.workspace_id) "
-            " FROM workspace_memberships "
-            " WHERE workspace_memberships.user_id = activity.user_id) "
+            "(SELECT MIN(workspace_memberships.workspace_id) FROM workspace_memberships "
+            "WHERE workspace_memberships.user_id = activity.user_id) "
             "WHERE workspace_id IS NULL"
         ))
-
-
-def add_activity(user_id, workspace_id, action, context=""):
-    if not workspace_id:
-        return
-    db.session.execute(text(
-        "INSERT INTO activity (user_id, workspace_id, action, context) "
-        "VALUES (:user_id, :workspace_id, :action, :context)"
-    ), {
-        "user_id": user_id,
-        "workspace_id": workspace_id,
-        "action": action[:180],
-        "context": (context or "")[:180],
-    })
-    db.session.commit()
 
 
 def workspace_activity():
@@ -102,29 +68,23 @@ def workspace_activity():
     if not membership or not workspace:
         return app_module.error("Workspace not found.", 404, "WORKSPACE_NOT_FOUND")
 
-    rows = db.session.query(Activity, User).join(
-        User, User.id == Activity.user_id
-    ).filter(
+    rows = db.session.query(Activity, User).join(User, User.id == Activity.user_id).filter(
         text("activity.workspace_id = :workspace_id")
-    ).params(workspace_id=workspace.id).order_by(
-        Activity.created_at.desc()
-    ).limit(100).all()
+    ).params(workspace_id=workspace.id).order_by(Activity.created_at.desc()).limit(100).all()
 
-    return app_module.ok({
-        "activity": [
-            {
-                "id": activity.id,
-                "action": activity.action,
-                "context": activity.context or "",
-                "user": app_module.user_payload(user),
-                "createdAt": activity.created_at.isoformat()
-                if activity.created_at else None,
-            }
-            for activity, user in rows
-        ]
-    })
+    return app_module.ok({"activity":[
+        {
+            "id": activity.id,
+            "action": activity.action,
+            "context": activity.context or "",
+            "user": app_module.user_payload(user),
+            "createdAt": activity.created_at.isoformat() if activity.created_at else None,
+        }
+        for activity, user in rows
+    ]})
 
 
+@jwt_required()
 def delete_workspace_activity(aid):
     user_id = int(get_jwt_identity())
     membership, workspace = selected_workspace(user_id)
@@ -138,25 +98,18 @@ def delete_workspace_activity(aid):
         return app_module.error("Activity not found.", 404, "ACTIVITY_NOT_FOUND")
     db.session.delete(activity)
     db.session.commit()
-    return app_module.ok({"message": "Activity deleted."})
+    return app_module.ok({"message":"Activity deleted."})
 
 
 def select_workspace(workspace_id):
     user_id = int(get_jwt_identity())
-    membership = Membership.query.filter_by(
-        user_id=user_id, workspace_id=workspace_id
-    ).first()
+    membership = Membership.query.filter_by(user_id=user_id, workspace_id=workspace_id).first()
     if not membership:
         return app_module.error("You are not a member of this workspace.", 403, "WORKSPACE_ACCESS_DENIED")
     workspace = db.session.get(Workspace, workspace_id)
-    return app_module.ok({
-        "workspace": {
-            "id": workspace.id,
-            "name": workspace.name,
-            "slug": workspace.slug,
-            "role": membership.role,
-        }
-    })
+    return app_module.ok({"workspace":{
+        "id":workspace.id,"name":workspace.name,"slug":workspace.slug,"role":membership.role
+    }})
 
 
 def record_after(endpoint_name, action, context_getter):
@@ -174,14 +127,13 @@ def record_after(endpoint_name, action, context_getter):
                 if membership and workspace:
                     context = context_getter(response)
                     db.session.execute(text(
-                        "INSERT INTO activity "
-                        "(user_id, workspace_id, action, context) "
+                        "INSERT INTO activity (user_id, workspace_id, action, context) "
                         "VALUES (:user_id, :workspace_id, :action, :context)"
                     ), {
-                        "user_id": user_id,
-                        "workspace_id": workspace.id,
-                        "action": action,
-                        "context": (context or "")[:180],
+                        "user_id":user_id,
+                        "workspace_id":workspace.id,
+                        "action":action,
+                        "context":(context or "")[:180],
                     })
                     db.session.commit()
             except Exception:
@@ -196,11 +148,10 @@ def record_after(endpoint_name, action, context_getter):
 ensure_activity_workspace_column()
 
 # Override the existing activity endpoints with workspace-aware versions.
-app.view_functions["activity"] = workspace_activity
+app.view_functions["activity"] = jwt_required()(workspace_activity)
 app.view_functions["delete_activity"] = delete_workspace_activity
 
-# Existing frontend already persists X-Workspace-ID. This endpoint is useful
-# for clients that want to validate a switch without introducing server state.
+# Keep workspace selection client-side; this endpoint only validates access.
 if "select_workspace" not in app.view_functions:
     app.add_url_rule(
         "/api/workspaces/<int:workspace_id>/select",
@@ -209,28 +160,8 @@ if "select_workspace" not in app.view_functions:
         methods=["POST"],
     )
 
-record_after(
-    "create_project",
-    "Created project",
-    lambda response: ((response.get_json() or {}).get("project") or {}).get("name", ""),
-)
-record_after(
-    "create_task",
-    "Created task",
-    lambda response: ((response.get_json() or {}).get("task") or {}).get("title", ""),
-)
-record_after(
-    "update_task",
-    "Updated task",
-    lambda response: "Task updated",
-)
-record_after(
-    "delete_project",
-    "Deleted project",
-    lambda response: "Project deleted",
-)
-record_after(
-    "delete_task",
-    "Deleted task",
-    lambda response: "Task deleted",
-)
+record_after("create_project","Created project",lambda response: ((response.get_json() or {}).get("project") or {}).get("name", ""))
+record_after("create_task","Created task",lambda response: ((response.get_json() or {}).get("task") or {}).get("title", ""))
+record_after("update_task","Updated task",lambda response: "Task updated")
+record_after("delete_project","Deleted project",lambda response: "Project deleted")
+record_after("delete_task","Deleted task",lambda response: "Task deleted")
