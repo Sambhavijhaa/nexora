@@ -16,6 +16,10 @@ def post_worker_init(worker):
     # to crash before serving any request.
     from app import app
 
+    # Install the small workspace/activity runtime patch after the app exists.
+    # It does not replace the main application or reset the database.
+    import workspace_runtime  # noqa: F401
+
     # Keep request_id logging safe for Gunicorn/Flask records that are emitted
     # outside the normal request lifecycle.
     request_id_filter = RequestIdFilter()
