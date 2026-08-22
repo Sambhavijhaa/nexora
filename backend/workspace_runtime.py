@@ -23,12 +23,10 @@ def selected_workspace(user_id):
         workspace_id = int(raw) if raw else None
     except (TypeError, ValueError):
         workspace_id = None
-
     if workspace_id:
         membership = Membership.query.filter_by(user_id=user_id, workspace_id=workspace_id).first()
         if membership:
             return membership, db.session.get(Workspace, workspace_id)
-
     membership = Membership.query.filter_by(user_id=user_id).order_by(Membership.created_at.asc()).first()
     return ((membership, db.session.get(Workspace, membership.workspace_id)) if membership else (None, None))
 
@@ -51,9 +49,6 @@ def ensure_activity_workspace_column():
                 conn.execute(text("ALTER TABLE activity ADD COLUMN workspace_id INTEGER"))
             except Exception:
                 pass
-
-        # Old activity rows predate workspace tracking. Assign each row to the
-        # user's original workspace so one event is never shown in every workspace.
         conn.execute(text(
             "UPDATE activity SET workspace_id = "
             "(SELECT MIN(workspace_memberships.workspace_id) FROM workspace_memberships "
@@ -62,16 +57,15 @@ def ensure_activity_workspace_column():
         ))
 
 
+@jwt_required()
 def workspace_activity():
     user_id = int(get_jwt_identity())
     membership, workspace = selected_workspace(user_id)
     if not membership or not workspace:
         return app_module.error("Workspace not found.", 404, "WORKSPACE_NOT_FOUND")
-
     rows = db.session.query(Activity, User).join(User, User.id == Activity.user_id).filter(
         text("activity.workspace_id = :workspace_id")
     ).params(workspace_id=workspace.id).order_by(Activity.created_at.desc()).limit(100).all()
-
     return app_module.ok({"activity":[
         {
             "id": activity.id,
@@ -116,7 +110,6 @@ def record_after(endpoint_name, action, context_getter):
     original = app.view_functions.get(endpoint_name)
     if not original or getattr(original, "_workspace_activity_wrapped", False):
         return
-
     def wrapped(*args, **kwargs):
         result = original(*args, **kwargs)
         response = make_response(result)
@@ -140,18 +133,15 @@ def record_after(endpoint_name, action, context_getter):
                 db.session.rollback()
                 app.logger.exception("Could not record workspace activity")
         return response
-
     wrapped._workspace_activity_wrapped = True
     app.view_functions[endpoint_name] = wrapped
 
 
 ensure_activity_workspace_column()
-
-# Override the existing activity endpoints with workspace-aware versions.
-app.view_functions["activity"] = jwt_required()(workspace_activity)
+app.view_functions["activity"] = workspace_activity
 app.view_functions["delete_activity"] = delete_workspace_activity
 
-# Keep workspace selection client-side; this endpoint only validates access.
+# Selection remains client-side through X-Workspace-ID; this only validates access.
 if "select_workspace" not in app.view_functions:
     app.add_url_rule(
         "/api/workspaces/<int:workspace_id>/select",
